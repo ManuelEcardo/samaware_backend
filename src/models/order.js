@@ -50,7 +50,9 @@ const orderSchema = new mongoose.Schema({
         }
     },
 
-    preparation_starting_date:{
+    //Times for each step
+
+    waiting_to_be_prepared_date:{
         type:String,
         cast:false,
         required:false,
@@ -70,7 +72,27 @@ const orderSchema = new mongoose.Schema({
         }
     },
 
-    preparation_end_date:{
+    being_prepared_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    prepared_date:{
         type:String,
         cast:false,
         required:false,
@@ -90,6 +112,197 @@ const orderSchema = new mongoose.Schema({
             return value;
         }
     },
+
+    being_priced_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    priced_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    being_verified_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    verified_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    waiting_to_ship_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    stored_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    shipped_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    failed_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    re_prepare_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+
 
     workerId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -106,7 +319,8 @@ const orderSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ['waiting_to_be_prepared', 'being_prepared', 'prepared','being_verified','re_prepare','waiting_to_ship','stored','shipped','failed'],
+        enum: ['waiting_to_be_prepared', 'being_prepared', 'prepared','being_priced','priced',
+                'being_verified','verified','re_prepare','waiting_to_ship','stored','shipped','failed'],
         required: true,
         default:'waiting_to_be_prepared'
     },
