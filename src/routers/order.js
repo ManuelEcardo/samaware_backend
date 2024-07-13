@@ -11,7 +11,7 @@ router.get('/orders', auth.managerAuth,  async (req,res)=>{
 
     try
     {
-        const o = await Order.find({}).populate('workerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({},null,{ sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
         // const populatedOrders = o.map(order => {
@@ -52,7 +52,7 @@ router.get('/orders/worker/:id',auth.managerAuth,async (req,res)=>{
     {
         const id = req.params.id;
 
-        const o = await Order.find({workerId:id}).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({workerId:id}, null, { sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -122,7 +122,7 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
 
     try
     {
-        const o = await Order.find({workerId: req.user._id, status: 'waiting_to_be_prepared'}).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({workerId: req.user._id, status: 'waiting_to_be_prepared'}, null, { sort:{createdAt:-1}} ).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -135,6 +135,24 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
     catch (e)
     {
         res.status(500).send({error:"Couldn't get your waiting orders.", message:e.message});
+    }
+});
+
+
+//Get non-ready orders
+router.get('/orders/nonReady', auth.managerAuth, async(req,res)=>{
+    try
+    {
+        const o = await Order.find({'status':{$nin:['stored','failed','shipped'], }},null,{ sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+
+        return res.status(200).send(components.prepareOrder({o:o}));
+
+    }
+    catch (e)
+    {
+        console.log(`COULDN'T GET PENDING ORDERS, ${e.message}`);
+
+        res.status(400).send({error:"Couldn't get pending orders", message:e.message});
     }
 });
 

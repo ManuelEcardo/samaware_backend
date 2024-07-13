@@ -5,8 +5,10 @@ import jwt from "jsonwebtoken";
 
 function prepareOrders({o})
 {
-    return o.map(order => {
-        const itemsWithDetails = order.items.map(item => {
+    return o.map(order =>
+    {
+        const itemsWithDetails = order.items.map(item =>
+        {
             const details = order.itemsDetails.find(detail => detail.itemId === item.itemId);
             return {
                 itemId: item.itemId,
@@ -15,14 +17,19 @@ function prepareOrders({o})
                 type: item.type
             };
         });
+
+        order.items=null; //Don't want the items to be returned
+
         return {
-            _id:order._id,
-            orderId: order.orderId,
-            registration_date: order.registration_date,
-            shipping_date: order.shipping_date,
-            status: order.status,
-            workerId: order.workerId,
-            items: itemsWithDetails
+            // _id:order._id,
+            // orderId: order.orderId,
+            // registration_date: order.registration_date,
+            // shipping_date: order.shipping_date,
+            // status: order.status,
+            // workerId: order.workerId,
+            // items: itemsWithDetails
+            order:order,
+            items:itemsWithDetails,
         };
     });
 
@@ -31,7 +38,8 @@ function prepareOrders({o})
 //Prepare a single order
 function prepareSingleOrder({order})
 {
-    const itemsWithDetails = order.items.map(item => {
+    const itemsWithDetails = order.items.map(item =>
+    {
         const details = order.itemsDetails.find(detail => detail.itemId === item.itemId);
         return {
             itemId: item.itemId,
@@ -41,16 +49,19 @@ function prepareSingleOrder({order})
         };
     });
 
-    return  {
-        _id:order._id,
-        orderId: order.orderId,
-        registration_date: order.registration_date,
-        shipping_date: order.shipping_date,
-        preparation_starting_date: order.preparation_starting_date,
-        preparation_end_date: order.preparation_end_date,
-        status: order.status,
-        workerId: order.workerId,
-        clientId: order.clientId,
+    order.items=null; //Don't want the items to be returned
+
+    return {
+        // _id:order._id,
+        // orderId: order.orderId,
+        // registration_date: order.registration_date,
+        // shipping_date: order.shipping_date,
+        // preparation_starting_date: order.preparation_starting_date,
+        // preparation_end_date: order.preparation_end_date,
+        // status: order.status,
+        // workerId: order.workerId,
+        // clientId: order.clientId,
+        order:order,
         items: itemsWithDetails,
     };
 }
