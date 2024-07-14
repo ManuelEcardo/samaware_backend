@@ -48,9 +48,19 @@ wsApp.ws('/webSocket',function (ws,req){ //was (ws,req).
                 //Check if registration
                 if(msg.type=== 'register' && msg.clientId)
                 {
-                    constants.clients.set(msg.clientId, { ws, ip: req.socket.remoteAddress });
+                    if(ws.user.role ==='manager')
+                    {
+                        constants.wsManager.set(msg.clientId.toString(), {ws, ip:req.socket.remoteAddress });
+                        console.log(`Registered manager with id: ${msg.id} and IP: ${req.socket.remoteAddress}`);
+                    }
 
-                    console.log(`Registered client with id: ${msg.id} and IP: ${req.socket.remoteAddress}`);
+                    else
+                    {
+                        constants.clients.set(msg.clientId.toString(), { ws, ip: req.socket.remoteAddress, role:ws.user.role });
+
+                        console.log(`Registered client with id: ${msg.id} and IP: ${req.socket.remoteAddress}`);
+                    }
+
                 }
 
                 else if (msg.type === 'message' && msg.clientId)
@@ -92,10 +102,20 @@ wsApp.ws('/webSocket',function (ws,req){ //was (ws,req).
     ws.on('close', () => {
         console.log(`Client disconnected`);
         // Remove client from the map
-        for (let [id, client] of constants.clients.entries()) {
+        for (let [id, client,role] of constants.clients.entries())
+        {
             if (client.ws === ws) {
                 constants.clients.delete(id);
                 console.log(`Removed client with id: ${id}`);
+                break;
+            }
+        }
+
+        for (let [id, client,role] of constants.wsManager.entries())
+        {
+            if (client.ws === ws) {
+                constants.wsManager.delete(id);
+                console.log(`Removed manager with id: ${id}`);
                 break;
             }
         }
@@ -106,3 +126,6 @@ app.listen(port,()=>
 {
     console.log(`Express is Up on port ${port}`);
 });
+
+
+export default socketManager

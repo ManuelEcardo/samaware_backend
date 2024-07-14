@@ -359,4 +359,14 @@ orderSchema.virtual('itemsDetails', {
     foreignField: 'itemId',
     justOne: false
 });
+
+orderSchema.pre('find', function (next) {
+    this.sort({ updatedAt: -1 });
+    next();
+});
+
+orderSchema.pre('findOne', function (next) {
+    this.sort({ updatedAt: -1 });
+    next();
+});
 export const Order = mongoose.model('Order', orderSchema);

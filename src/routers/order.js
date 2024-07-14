@@ -3,7 +3,8 @@ import {User} from "../models/user.js";
 import {Order} from "../models/order.js";
 import auth from "../middleware/auth.js";
 import components from "../shared/components.js";
-
+import socketManager from '../index.js';
+import constants from "../shared/constants.js";
 const router= express.Router();
 
 //Get All Orders in the system
@@ -138,7 +139,6 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
     }
 });
 
-
 //Get non-ready orders
 router.get('/orders/nonReady', auth.managerAuth, async(req,res)=>{
     try
@@ -156,6 +156,53 @@ router.get('/orders/nonReady', auth.managerAuth, async(req,res)=>{
     }
 });
 
+//Create an Order
+router.post('/orders/create',auth.managerAuth,async (req,res)=>{
+
+    try
+    {
+        const order = new Order(req.body);
+
+        await order.save();
+
+        await (await order.populate('workerId')).populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'}); //Population
+
+        const populatedOrder= components.prepareSingleOrder({order:order});
+
+
+        components.wsFindClient({clientId:req.body.workerId, json:{type:'order', order:populatedOrder}});
+
+        res.status(201).send(populatedOrder);
+
+    }
+
+    catch (e)
+    {
+        console.log(`Couldn't create an order, ${e}`);
+        res.status(500).send({error:"Couldn't create an order", message:e.message});
+    }
+});
+
+//Delete an Order by id
+router.delete('/orders/delete', auth.managerAuth, async(req,res)=>{
+
+    try
+    {
+        const o = await Order.findOneAndDelete({_id:req.body.id});
+
+        if(!o)
+        {
+            return res.status(404).send({error:'No such order exists'});
+        }
+
+        return res.status(200).send(o);
+    }
+    catch (e)
+    {
+        res.status(500).send(e);
+    }
+});
+
 //Update an Order
 router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
 
@@ -165,15 +212,24 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
 
         //Setting allowed keys to be updated
         const updates= Object.keys(req.body);
-        const allowedUpdates=['id','registration_date','shipping_date','preparation_starting_date','preparation_end_date', 'workerId', 'clientId', 'status'];
 
-        const isValid= updates.every((update)=>allowedUpdates.includes(update));
+        const nonAllowedUpdates = ['items'];
+        const isInvalid = updates.some((update) => nonAllowedUpdates.includes(update));
 
-        //If a non allowed key was updated
-        if(!isValid)
-        {
-            return res.status(400).send({'error':'A Not Allowed Field has been used'});
+        // If a non-allowed key was updated
+        if (isInvalid) {
+            return res.status(400).send({ 'error': 'A Not Allowed Field has been used' });
         }
+
+        // const allowedUpdates=['id','registration_date','shipping_date','preparation_starting_date','preparation_end_date', 'workerId', 'clientId', 'status'];
+        //
+        // const isValid= updates.every((update)=>allowedUpdates.includes(update));
+        //
+        // //If a non allowed key was updated
+        // if(!isValid)
+        // {
+        //     return res.status(400).send({'error':'A Not Allowed Field has been used'});
+        // }
 
         // Update the order
         const updatedOrder = await Order.findOneAndUpdate(
@@ -191,29 +247,7 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
 
         res.status(200).send(populatedOrder);
 
-        // //Get Order details
-        // const order= await Order.findOne({orderId:id}).populate('workerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
-        //
-        // if(!order)
-        // {
-        //     return res.status(404).send({error: 'no order with such id was found'});
-        // }
-        //
-        //
-        // updates.forEach((update)=>
-        // {
-        //     if(update !== 'id')
-        //     {
-        //         order[update]=req.body[update];
-        //     }
-        //
-        // });
-        //
-        // await order.save();
-        //
-        // const populatedOrder = components.prepareSingleOrder({ order });
-        //
-        // res.status(200).send(populatedOrder);
+        components.wsNotifyManager({order:populatedOrder});
 
     }
     catch (e)
@@ -222,62 +256,19 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
     }
 });
 
-//Create an Order
-router.post('/orders/create',auth.managerAuth,async (req,res)=>{
 
-    try
-    {
-        const order = new Order(req.body);
+//Testing Web Sockets inside the APIS, TBD
+router.get('/orders/ooo', async(req,res)=>{
 
-        await order.save();
+    // Send WebSocket message to a specific client
+    const targetClient = constants.clients.get('123'); // Assuming clientId is stored in the order and is unique
 
-        await (await order.populate('workerId')).populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'}); //Population
-
-        // const itemsWithDetails = order.items.map(item => {
-        //     const details = order.itemsDetails.find(detail => detail.itemId === item.itemId);
-        //     return {
-        //         itemId: item.itemId,
-        //         name: details ? details.name : '',
-        //         quantity: item.quantity,
-        //         type: item.type,
-        //     };
-        // });
-        //
-        // const populatedOrder = {
-        //     orderId: order.orderId,
-        //     registration_date: order.registration_date,
-        //     shipping_date: order.shipping_date,
-        //     status: order.status,
-        //     workerId: order.workerId,
-        //     items: itemsWithDetails,
-        // };
-
-        res.status(201).send(components.prepareSingleOrder({order:order}));
+    if (targetClient) {
+        targetClient.ws.send(JSON.stringify({
+            type: 'order_created',
+            order: 'ord'
+        }));
     }
-    catch (e)
-    {
-        console.log(`Couldn't create an order, ${e}`);
-        res.status(500).send({error:"Couldn't create an order", message:e.message});
-    }
+    res.send({ok:'ok'});
 });
-
-//Delete an Order by id
-router.delete('/orders/delete', auth.managerAuth, async(req,res)=>{
-
-    try
-    {
-        const o = await Order.findOneAndDelete(req.body.id);
-
-        if(!o)
-        {
-            return res.status(404).send({error:'No such order exists'});
-        }
-        return res.status(200).send(o);
-    }
-    catch (e)
-    {
-        res.status(500).send(e);
-    }
-});
-
 export default router;

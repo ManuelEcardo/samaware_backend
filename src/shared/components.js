@@ -3,6 +3,8 @@ import constants from "./constants.js";
 import {User} from "../models/user.js";
 import jwt from "jsonwebtoken";
 
+/** ORDERS PREPARE **/
+
 function prepareOrders({o})
 {
     return o.map(order =>
@@ -35,7 +37,7 @@ function prepareOrders({o})
 
 }
 
-//Prepare a single order
+/** Prepare a single order **/
 function prepareSingleOrder({order})
 {
     const itemsWithDetails = order.items.map(item =>
@@ -67,9 +69,29 @@ function prepareSingleOrder({order})
 }
 
 
+//--------------------
+
+//WORKER PREPARE
+
+/** prepare the worker details **/
+function prepareWorkers({workers})
+{
+    return workers.map(worker => {
+        const preparedOrders = prepareOrders({o:worker.orders});
+        const workerObject = worker.toJSON();
+        return {
+            ...workerObject,
+            orders: preparedOrders
+        };
+    });
+}
+
+//--------------------
+
+
 //WEB SOCKETS
 
-// Authentication WS
+/** Authentication WS **/
 async function wsAuth (message)
 {
     try{
@@ -94,7 +116,7 @@ async function wsAuth (message)
 }
 
 
-//Check what does this WS message mean
+/**Check what does this WS message mean**/
 function analyzeWsMessage(msg)
 {
     switch (msg.todo)
@@ -116,4 +138,33 @@ function analyzeWsMessage(msg)
 }
 
 
-export default {prepareOrder: prepareOrders, prepareSingleOrder, wsAuth, analyzeWsMessage}
+/** Notify manager via ws **/
+function wsNotifyManager({order})
+{
+    try
+    {
+        constants.wsManager.forEach((manager)=>
+        {
+            manager.ws.send(JSON.stringify({type:'order'}));
+            //manager.ws.send(JSON.stringify({type:'order', order:order}));
+        });
+    }
+    catch (e)
+    {
+        console.log(`Error in wsNotifyManager, ${e.toString()}`);
+    }
+}
+
+/**Find Client and send data **/
+function wsFindClient({clientId, json})
+{
+    constants.clients.forEach(function (client)
+    {
+        if(client.ws.user._id.toString() === clientId.toString())
+        {
+            return client.ws.send(JSON.stringify(json));
+        }
+    });
+}
+
+export default {prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, analyzeWsMessage, wsNotifyManager, wsFindClient}

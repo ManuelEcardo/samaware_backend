@@ -1,8 +1,13 @@
 import express from "express";
 import {User} from "../models/user.js";
 import auth from "../middleware/auth.js";
+import components from "../shared/components.js";
+import socketManager from '../index.js';
+
 
 const router= express.Router();
+
+//USERS
 
 //Add a New User
 router.post('/addUser', async (req,res)=>{
@@ -23,7 +28,6 @@ router.post('/addUser', async (req,res)=>{
     }
 });
 
-
 //Get All Users,  Parameters are: PATH - Middleware - Handlers
 router.get('/users', auth.userAuth, async (req, res) => {
     try {
@@ -35,12 +39,10 @@ router.get('/users', auth.userAuth, async (req, res) => {
     }
 })
 
-
 //Get Your User Data,  Parameters are: PATH - Middleware - Handlers
 router.get('/users/me', auth.userAuth, async (req, res) => {
     res.status(201).send(req.user); // The User came from request since we did it in the auth.auth function, we did set the req.user to the user that was found.
 });
-
 
 //Get a Specific User with ID
 router.get('/users/:id',auth.userAuth, async (req, res) => {
@@ -55,29 +57,6 @@ router.get('/users/:id',auth.userAuth, async (req, res) => {
         res.status(200).send(u);
     } catch (e) {
         res.status(500).send(e);
-    }
-});
-
-//Get Workers, only for manager
-router.get('/workers/',auth.managerAuth,async (req,res)=>{
-
-    try
-    {
-
-        const u = await User.find({role:'worker'});
-
-        if(!u)
-        {
-            return res.status(404).send({'error':'No workers have been found'});
-        }
-
-        res.status(200).send({workers:u});
-
-    }
-    catch (e)
-    {
-        console.log(`Error While getting workers, ${e}`);
-        res.status(400).send({error:"Couldn't get workers", message:e.message});
     }
 });
 
@@ -129,7 +108,6 @@ router.patch('/users/me', auth.userAuth, async (req, res) => {
     }
 
 });
-
 
 //Delete a User, uses middleware for auth.authentication
 router.delete('/users/delete', auth.userAuth, async (req, res) => {
@@ -194,5 +172,58 @@ router.post('/users/logoutAll',auth.userAuth, async (req, res)=>{
 });
 
 
+//WORKERS
+
+//Get Workers with their orders
+router.get('/workers/details',auth.managerAuth,async (req,res)=>{
+    try
+    {
+        const u = await User.find({role:'worker'}).populate({
+            path: 'orders',
+            options: { sort: { updatedAt: -1 } },
+            populate: {
+                path: 'itemsDetails',
+                model: 'Item',
+                select: 'itemId name color',
+            }
+        });
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No workers have been found'});
+        }
+
+        res.status(200).send(components.prepareWorkers({workers:u}));
+
+    }
+    catch (e)
+    {
+        console.log(`Error While getting workers, ${e}`);
+        res.status(400).send({error:"Couldn't get workers", message:e.message});
+    }
+});
+
+//Get Workers, only for manager
+router.get('/workers/',auth.managerAuth,async (req,res)=>{
+
+    try
+    {
+
+        const u = await User.find({role:'worker'});
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No workers have been found'});
+        }
+
+        res.status(200).send({workers:u});
+
+    }
+    catch (e)
+    {
+        console.log(`Error While getting workers, ${e}`);
+        res.status(400).send({error:"Couldn't get workers", message:e.message});
+    }
+});
 
 export default router

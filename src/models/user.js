@@ -89,6 +89,16 @@ userSchema.pre('save',async function (next){
     next(); //Call it so Mongoose knows we are done doing the Middleware work
 });
 
+userSchema.pre('find', function (next) {
+    this.sort({ updatedAt: -1 });
+    next();
+});
+
+userSchema.pre('findOne', function (next) {
+    this.sort({ updatedAt: -1 });
+    next();
+});
+
 
 //Create a function to findCredentials
 userSchema.statics.findByCredentials= async (email,password)=>{
