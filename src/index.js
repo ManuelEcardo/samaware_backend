@@ -51,14 +51,14 @@ wsApp.ws('/webSocket',function (ws,req){ //was (ws,req).
                     if(ws.user.role ==='manager')
                     {
                         constants.wsManager.set(msg.clientId.toString(), {ws, ip:req.socket.remoteAddress });
-                        console.log(`Registered manager with id: ${msg.id} and IP: ${req.socket.remoteAddress}`);
+                        console.log(`Registered manager with id: ${msg.clientId} and IP: ${req.socket.remoteAddress}`);
                     }
 
                     else
                     {
                         constants.clients.set(msg.clientId.toString(), { ws, ip: req.socket.remoteAddress, role:ws.user.role });
 
-                        console.log(`Registered client with id: ${msg.id} and IP: ${req.socket.remoteAddress}`);
+                        console.log(`Registered client with id: ${msg.clientId} and IP: ${req.socket.remoteAddress}`);
                     }
 
                 }

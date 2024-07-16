@@ -123,7 +123,7 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
 
     try
     {
-        const o = await Order.find({workerId: req.user._id, status: 'waiting_to_be_prepared'}, null, { sort:{createdAt:-1}} ).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({workerId: req.user._id, status: {$in:['waiting_to_be_prepared','being_prepared'], }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
