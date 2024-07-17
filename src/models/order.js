@@ -1,6 +1,7 @@
 import mongoose, {Schema} from "mongoose";
 import moment from "moment";
 
+//Todo: for each Order, there should be fields for priceSetters and inspectors like  it is available for workers, so we can get data about who took actions in this order
 
 const orderSchema = new mongoose.Schema({
 

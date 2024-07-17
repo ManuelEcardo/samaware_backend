@@ -155,6 +155,44 @@ function wsNotifyManager({order})
     }
 }
 
+/** Notify depends on role, if role is prepared => notify priceSetters**/
+function wsNotifyInclinedClients({order})
+{
+    try
+    {
+        const status = order.status; //Getting the order status
+
+        constants.clients.forEach((client)=>
+        {
+            switch (status)
+            {
+                case 'prepared':
+
+                    if(client.ws.user.role === 'priceSetter')
+                    {
+                        client.ws.send(JSON.stringify({type:'order'}));
+                    }
+                    break;
+
+                case 'priced':
+
+                    if(client.ws.user.role === 'inspector')
+                    {
+                        client.ws.send(JSON.stringify({type:'order'}));
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        });
+    }
+    catch (e)
+    {
+        console.log(`Error in wsNotifyManager, ${e.toString()}`);
+    }
+}
+
 /**Find Client and send data **/
 function wsFindClient({clientId, json})
 {
@@ -167,4 +205,23 @@ function wsFindClient({clientId, json})
     });
 }
 
-export default {prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, analyzeWsMessage, wsNotifyManager, wsFindClient}
+/**Returns the order status to be returned depending on the user's role **/
+function findTypesByRole({role, isAll: isChecked = false})
+{
+    switch (role)
+    {
+        case 'worker':
+            return isChecked? ['being_prepared', 'prepared'] : ['waiting_to_be_prepared','being_prepared'];
+
+        case 'priceSetter':
+            return isChecked? ['being_priced', 'priced'] : ['prepared', 'being_priced'];
+
+        case 'inspector':
+            return isChecked? ['being_verified', 'verified'] :['priced', 'being_verified'];
+
+        default:
+            return [];
+
+    }
+}
+export default {prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, analyzeWsMessage, wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole}

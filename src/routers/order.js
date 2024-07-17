@@ -123,7 +123,9 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
 
     try
     {
-        const o = await Order.find({workerId: req.user._id, status: {$in:['waiting_to_be_prepared','being_prepared'], }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const orderTypes= components.findTypesByRole({role:req.user.role, isAll:false});
+
+        const o = await Order.find({workerId: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -136,6 +138,47 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
     catch (e)
     {
         res.status(500).send({error:"Couldn't get your waiting orders.", message:e.message});
+    }
+});
+
+//Get all the orders that
+router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
+    try
+    {
+        const orderTypes= components.findTypesByRole({role:req.user.role, isAll:true});
+
+        const o = await Order.find({workerId: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        if(!o)
+        {
+            return res.status(200).send({});
+        }
+
+        return res.status(200).send(components.prepareOrder({o:o}));
+    }
+
+    catch (e)
+    {
+        res.status(500).send({error:"Couldn't get your waiting orders.", message:e.message});
+    }
+});
+
+
+router.get('/orders/me',auth.userAuth, async(req,res)=>{
+    try
+    {
+        const o= await Order.find({workerId: req.user._id}, null, { sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
+
+        if(!o)
+        {
+            return res.status(200).send({});
+        }
+
+        return res.status(200).send(components.prepareOrder({o:o}));
+    }
+    catch (e)
+    {
+        res.status(500).send({error:"Couldn't get your orders.", message:e.message});
     }
 });
 
@@ -221,16 +264,6 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
             return res.status(400).send({ 'error': 'A Not Allowed Field has been used' });
         }
 
-        // const allowedUpdates=['id','registration_date','shipping_date','preparation_starting_date','preparation_end_date', 'workerId', 'clientId', 'status'];
-        //
-        // const isValid= updates.every((update)=>allowedUpdates.includes(update));
-        //
-        // //If a non allowed key was updated
-        // if(!isValid)
-        // {
-        //     return res.status(400).send({'error':'A Not Allowed Field has been used'});
-        // }
-
         // Update the order
         const updatedOrder = await Order.findOneAndUpdate(
             { orderId: id },
@@ -249,6 +282,8 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
 
         components.wsNotifyManager({order:populatedOrder});
 
+        components.wsNotifyInclinedClients({order:populatedOrder});
+
     }
     catch (e)
     {
@@ -257,18 +292,4 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
 });
 
 
-//Testing Web Sockets inside the APIS, TBD
-router.get('/orders/ooo', async(req,res)=>{
-
-    // Send WebSocket message to a specific client
-    const targetClient = constants.clients.get('123'); // Assuming clientId is stored in the order and is unique
-
-    if (targetClient) {
-        targetClient.ws.send(JSON.stringify({
-            type: 'order_created',
-            order: 'ord'
-        }));
-    }
-    res.send({ok:'ok'});
-});
 export default router;
