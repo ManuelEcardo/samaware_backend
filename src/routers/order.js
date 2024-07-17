@@ -15,26 +15,6 @@ router.get('/orders', auth.managerAuth,  async (req,res)=>{
         const o = await Order.find({},null,{ sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
-        // const populatedOrders = o.map(order => {
-        //     const itemsWithDetails = order.items.map(item => {
-        //         const details = order.itemsDetails.find(detail => detail.itemId === item.itemId);
-        //         return {
-        //             itemId: item.itemId,
-        //             name: details ? details.name : '',
-        //             quantity: item.quantity,
-        //             type: item.type
-        //         };
-        //     });
-        //     return {
-        //         orderId: order.orderId,
-        //         registration_date: order.registration_date,
-        //         shipping_date: order.shipping_date,
-        //         status: order.status,
-        //         workerId: order.workerId,
-        //         items: itemsWithDetails
-        //     };
-        // });
-
         return res.status(200).send(components.prepareOrder({o:o}));
     }
 
@@ -266,7 +246,7 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
 
         // Update the order
         const updatedOrder = await Order.findOneAndUpdate(
-            { orderId: id },
+            { _id: id },
             { $set: req.body },
             { new: true } // Return the updated document
         ).populate('workerId').populate({ path: 'itemsDetails', model: 'Item', select: 'itemId name color' });
