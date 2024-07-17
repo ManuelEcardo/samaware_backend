@@ -3,8 +3,6 @@ import {User} from "../models/user.js";
 import auth from "../middleware/auth.js";
 import components from "../shared/components.js";
 import socketManager from '../index.js';
-
-
 const router= express.Router();
 
 //USERS
@@ -181,11 +179,24 @@ router.get('/workers/details',auth.managerAuth,async (req,res)=>{
         const u = await User.find({role:'worker'}).populate({
             path: 'orders',
             options: { sort: { updatedAt: -1 } },
-            populate: {
-                path: 'itemsDetails',
-                model: 'Item',
-                select: 'itemId name color',
-            }
+            populate: [
+                {
+                    path: 'itemsDetails',
+                    model: 'Item',
+                    select: 'itemId name color',
+                },
+
+                {
+                    path:'inspectorId',
+                    model:'User'
+                },
+
+                {
+                    path:'priceSetterId',
+                    model:'User'
+                },
+            ],
+
         });
 
         if(!u)
@@ -222,6 +233,81 @@ router.get('/workers/',auth.managerAuth,async (req,res)=>{
     catch (e)
     {
         console.log(`Error While getting workers, ${e}`);
+        res.status(400).send({error:"Couldn't get workers", message:e.message});
+    }
+});
+
+//PriceSetters
+
+//Get PriceSetters with their details
+router.get('/priceSetters/details',auth.managerAuth,async (req,res)=>{
+    try
+    {
+        const u = await User.find({role:'priceSetter'}).populate({
+            path: 'priceSetterOrders',
+            options: { sort: { updatedAt: -1 } },
+            populate:[
+                {
+                    path: 'itemsDetails',
+                    model: 'Item',
+                    select: 'itemId name color',
+                },
+
+                {
+                    path:'workerId',
+                    model:'User'
+                },
+
+                {
+                    path:'inspectorId',
+                    model:'User'
+                },
+            ],
+        },);
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No priceSetters have been found'});
+        }
+
+        res.status(200).send(components.preparePriceSetters({priceSetters:u}));
+
+    }
+    catch (e)
+    {
+        console.log(`Error While getting workers, ${e}`);
+        res.status(400).send({error:"Couldn't get workers", message:e.message});
+    }
+});
+
+
+//Inspector
+
+//Get Inspectors with their details
+router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
+    try
+    {
+        const u = await User.find({role:'inspector'}).populate({
+            path: 'inspectorOrders',
+            options: { sort: { updatedAt: -1 } },
+            populate: {
+                path: 'itemsDetails',
+                model: 'Item',
+                select: 'itemId name color',
+            }
+        });
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No inspectors have been found'});
+        }
+
+        res.status(200).send(components.prepareInspector({inspectors:u}));
+
+    }
+    catch (e)
+    {
+        console.log(`Error While getting workers, ${e}, ${e.stack}`);
         res.status(400).send({error:"Couldn't get workers", message:e.message});
     }
 });

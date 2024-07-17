@@ -311,6 +311,18 @@ const orderSchema = new mongoose.Schema({
         required: true
     },
 
+    priceSetterId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
+
+    inspectorId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
+
     clientId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Client',

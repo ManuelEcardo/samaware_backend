@@ -76,6 +76,18 @@ userSchema.virtual('orders',{
     foreignField:'workerId',
 });
 
+userSchema.virtual('inspectorOrders',{
+    ref:'Order',
+    localField:'_id',
+    foreignField:'inspectorId',
+});
+
+userSchema.virtual('priceSetterOrders',{
+    ref:'Order',
+    localField:'_id',
+    foreignField:'priceSetterId',
+});
+
 //Hashing Password before Saving
 userSchema.pre('save',async function (next){
     const user=this;

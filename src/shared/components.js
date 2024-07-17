@@ -89,6 +89,36 @@ function prepareWorkers({workers})
 //--------------------
 
 
+//INSPECTOR PREPARE
+
+/** prepare the inspector details **/
+function prepareInspectors({inspectors})
+{
+    return inspectors.map(inspector => {
+        const preparedOrders = prepareOrders({o:inspector.inspectorOrders});
+        const inspectorObject = inspector.toJSON();
+        return {
+            ...inspectorObject,
+            orders: preparedOrders
+        };
+    });
+}
+
+
+//PRICE-SETTER PREPARE
+
+function preparePriceSetters({priceSetters})
+{
+    return priceSetters.map(priceSetter => {
+        const preparedOrders = prepareOrders({o:priceSetter.priceSetterOrders});
+        const priceSetterObject = priceSetter.toJSON();
+        return {
+            ...priceSetterObject,
+            orders: preparedOrders
+        };
+    });
+}
+
 //WEB SOCKETS
 
 /** Authentication WS **/
@@ -117,25 +147,25 @@ async function wsAuth (message)
 
 
 /**Check what does this WS message mean**/
-function analyzeWsMessage(msg)
-{
-    switch (msg.todo)
-    {
-        //Assign => an order will be sent to a worker
-        case 'assign':
-            console.log('');
-            break;
-
-        //Update order data or status
-        case 'update':
-            console.log('');
-            break;
-
-        default:
-            break;
-
-    }
-}
+// function analyzeWsMessage(msg)
+// {
+//     switch (msg.todo)
+//     {
+//         //Assign => an order will be sent to a worker
+//         case 'assign':
+//             console.log('');
+//             break;
+//
+//         //Update order data or status
+//         case 'update':
+//             console.log('');
+//             break;
+//
+//         default:
+//             break;
+//
+//     }
+// }
 
 
 /** Notify manager via ws **/
@@ -224,4 +254,6 @@ function findTypesByRole({role, isAll: isChecked = false})
 
     }
 }
-export default {prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, analyzeWsMessage, wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole}
+export default {prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, preparePriceSetters,
+                wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole, prepareInspector: prepareInspectors,
+                }

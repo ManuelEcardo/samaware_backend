@@ -43,7 +43,7 @@ const managerAuth= async(req, res, next)=>{
         next();
 
     }catch (e) {
-        res.status(401).send({error:'Not Authenticated, worker role found', e});
+        res.status(401).send({error:'Not Authenticated', e});
     }
 };
 

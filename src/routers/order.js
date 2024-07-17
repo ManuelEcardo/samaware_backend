@@ -1,10 +1,8 @@
 import express from "express";
-import {User} from "../models/user.js";
 import {Order} from "../models/order.js";
 import auth from "../middleware/auth.js";
 import components from "../shared/components.js";
 import socketManager from '../index.js';
-import constants from "../shared/constants.js";
 const router= express.Router();
 
 //Get All Orders in the system
@@ -12,7 +10,7 @@ router.get('/orders', auth.managerAuth,  async (req,res)=>{
 
     try
     {
-        const o = await Order.find({},null,{ sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({},null,{ sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
         return res.status(200).send(components.prepareOrder({o:o}));
@@ -33,32 +31,13 @@ router.get('/orders/worker/:id',auth.managerAuth,async (req,res)=>{
     {
         const id = req.params.id;
 
-        const o = await Order.find({workerId:id}, null, { sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({workerId:id}, null, { sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
             return res.status(404).send({error:'No Orders have been found'});
         }
 
-        // const populatedOrders = o.map(order => {
-        //     const itemsWithDetails = order.items.map(item => {
-        //         const details = order.itemsDetails.find(detail => detail.itemId === item.itemId);
-        //         return {
-        //             itemId: item.itemId,
-        //             name: details ? details.name : '',
-        //             quantity: item.quantity,
-        //             type: item.type
-        //         };
-        //     });
-        //     return {
-        //         orderId: order.orderId,
-        //         registration_date: order.registration_date,
-        //         shipping_date: order.shipping_date,
-        //         status: order.status,
-        //         workerId: order.workerId,
-        //         items: itemsWithDetails
-        //     };
-        // });
 
         return res.status(200).send(components.prepareOrder({o:o}));
     }
@@ -77,7 +56,7 @@ router.get('/orders/id', auth.managerAuth, async (req,res)=>{
     {
         const id= req.body.id;
 
-        const order = await Order.findOne({orderId: id}).populate('workerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const order = await Order.findOne({orderId: id}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
         if(!order)
@@ -105,7 +84,7 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
     {
         const orderTypes= components.findTypesByRole({role:req.user.role, isAll:false});
 
-        const o = await Order.find({workerId: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({workerId: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -127,7 +106,7 @@ router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
     {
         const orderTypes= components.findTypesByRole({role:req.user.role, isAll:true});
 
-        const o = await Order.find({workerId: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({workerId: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -147,7 +126,7 @@ router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
 router.get('/orders/me',auth.userAuth, async(req,res)=>{
     try
     {
-        const o= await Order.find({workerId: req.user._id}, null, { sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
+        const o= await Order.find({workerId: req.user._id}, null, { sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
 
         if(!o)
         {
@@ -166,7 +145,7 @@ router.get('/orders/me',auth.userAuth, async(req,res)=>{
 router.get('/orders/nonReady', auth.managerAuth, async(req,res)=>{
     try
     {
-        const o = await Order.find({'status':{$nin:['stored','failed','shipped'], }},null,{ sort:{createdAt:-1}}).populate('workerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({'status':{$nin:['stored','failed','shipped'], }},null,{ sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
         return res.status(200).send(components.prepareOrder({o:o}));
 
@@ -188,7 +167,7 @@ router.post('/orders/create',auth.managerAuth,async (req,res)=>{
 
         await order.save();
 
-        await (await order.populate('workerId')).populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'}); //Population
+        await (await (await (await order.populate('workerId')).populate('priceSetterId')).populate('inspectorId')).populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'}); //Population
 
         const populatedOrder= components.prepareSingleOrder({order:order});
 
@@ -249,7 +228,7 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
             { _id: id },
             { $set: req.body },
             { new: true } // Return the updated document
-        ).populate('workerId').populate({ path: 'itemsDetails', model: 'Item', select: 'itemId name color' });
+        ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({ path: 'itemsDetails', model: 'Item', select: 'itemId name color' });
 
         if (!updatedOrder) {
             return res.status(404).send({ error: 'No order with such id was found' });
