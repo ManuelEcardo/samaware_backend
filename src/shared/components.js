@@ -254,6 +254,27 @@ function findTypesByRole({role, isAll: isChecked = false})
 
     }
 }
+
+/** Returns the type to be filtered depending on role; worker => workerId**/
+function filterByRole({role})
+{
+    switch (role)
+    {
+        case 'worker':
+            return 'workerId';
+
+        case 'priceSetter':
+            return 'priceSetterId';
+
+        case 'inspector':
+            return 'inspectorId';
+
+        default:
+            return [];
+    }
+}
+
 export default {prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, preparePriceSetters,
                 wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole, prepareInspector: prepareInspectors,
+                filterByRole,
                 }

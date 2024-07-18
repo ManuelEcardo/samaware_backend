@@ -84,7 +84,9 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
     {
         const orderTypes= components.findTypesByRole({role:req.user.role, isAll:false});
 
-        const o = await Order.find({workerId: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const filterId = components.filterByRole({role:req.user.role});
+
+        const o = await Order.find({[filterId]: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -100,13 +102,47 @@ router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
     }
 });
 
+
+//Get a priceSetters & Inspectors orders waiting to be prepared; no Id because they assign it to themselves by patchOrder...
+router.get('/orders/priceInspector/waiting_me', auth.userAuth,async (req,res)=>{
+
+    try
+    {
+        //const orderTypes= components.findTypesByRole({role:req.user.role, isAll:false});
+
+        const filterId = components.filterByRole({role:req.user.role});
+
+        const o = await Order.find({ status: {$in:['prepared'], }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_priced'], }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+
+        // Merge the two arrays of orders
+        const combinedOrders = [...o, ...o2];
+
+        if(!combinedOrders)
+        {
+            return res.status(200).send({});
+        }
+
+        return res.status(200).send(components.prepareOrder({o:combinedOrders}));
+    }
+
+    catch (e)
+    {
+        res.status(500).send({error:"Couldn't get your waiting orders.", message:e.message});
+    }
+});
+
 //Get all the orders that
 router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
     try
     {
         const orderTypes= components.findTypesByRole({role:req.user.role, isAll:true});
 
-        const o = await Order.find({workerId: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const filterId = components.filterByRole({role:req.user.role});
+
+        const o = await Order.find({[filterId]: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -126,7 +162,9 @@ router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
 router.get('/orders/me',auth.userAuth, async(req,res)=>{
     try
     {
-        const o= await Order.find({workerId: req.user._id}, null, { sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
+        const filterId = components.filterByRole({role:req.user.role});
+
+        const o= await Order.find({[filterId]: req.user._id}, null, { sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
 
         if(!o)
         {
