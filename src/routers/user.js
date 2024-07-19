@@ -290,11 +290,25 @@ router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
         const u = await User.find({role:'inspector'}).populate({
             path: 'inspectorOrders',
             options: { sort: { updatedAt: -1 } },
-            populate: {
-                path: 'itemsDetails',
-                model: 'Item',
-                select: 'itemId name color',
-            }
+            populate: [
+                {
+                    path: 'itemsDetails',
+                    model: 'Item',
+                    select: 'itemId name color',
+                },
+
+                {
+                    path:'workerId',
+                    model:'User'
+                },
+
+                {
+                    path:'priceSetterId',
+                    model:'User'
+                },
+
+
+            ],
         });
 
         if(!u)
