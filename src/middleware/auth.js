@@ -20,7 +20,8 @@ const userAuth= async(req, res, next)=>{
         //console.log(`${user._id} is Authenticated `);
         next();
     }catch (e) {
-        res.status(401).send({error:'Not Authenticated', e});
+        res.status(401).send({error:'Not Authenticated', message:e.message});
+
     }
 };
 

@@ -3,17 +3,29 @@ import {Order} from "../models/order.js";
 import auth from "../middleware/auth.js";
 import components from "../shared/components.js";
 import socketManager from '../index.js';
+import constants from "../shared/constants.js";
+
 const router= express.Router();
 
 //Get All Orders in the system
 router.get('/orders', auth.managerAuth,  async (req,res)=>{
+    /** Paginated **/
 
     try
     {
-        const o = await Order.find({},null,{ sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const page = parseInt(req.query.page) || constants.pageDefault; // Current page number, default to 1
+        const limit = parseInt(req.query.limit) || constants.limitDefault; // Number of posts per page, default to 3
+
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
+        const o = await Order.find({},null,{limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
-        return res.status(200).send(components.prepareOrder({o:o}));
+        //Calculate the pagination and return it in a Map.
+        const pagination= await Order.paginationCalculator({page:page, limit:limit});
+
+        return res.status(200).send(components.prepareOrder({o:o, pagination:pagination}));
     }
 
     catch (e)
@@ -21,31 +33,6 @@ router.get('/orders', auth.managerAuth,  async (req,res)=>{
         console.log(`COULDN'T GET ORDERS, ${e.message}`);
 
         res.status(400).send({error:"Couldn't get all orders", message:e.message});
-    }
-});
-
-//Get Orders of a specific worker
-router.get('/orders/worker/:id',auth.managerAuth,async (req,res)=>{
-
-    try
-    {
-        const id = req.params.id;
-
-        const o = await Order.find({workerId:id}, null, { sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
-
-        if(!o)
-        {
-            return res.status(404).send({error:'No Orders have been found'});
-        }
-
-
-        return res.status(200).send(components.prepareOrder({o:o}));
-    }
-
-    catch (e)
-    {
-        console.log(`Couldn't get orders of this worker, ${e.message}`);
-        res.status(400).send({error:"Couldn't get the orders of this worker", message:e.message});
     }
 });
 
@@ -78,7 +65,7 @@ router.get('/orders/id', auth.managerAuth, async (req,res)=>{
 });
 
 //Get a worker's orders waiting to be prepared
-router.get('/orders/waiting_me', auth.userAuth,async (req,res)=>{
+router.get('/orders/workerRole/waiting_me', auth.userAuth,async (req,res)=>{
 
     try
     {
@@ -165,8 +152,9 @@ router.get('/orders/inspector/waiting_me', auth.userAuth,async (req,res)=>{
 });
 
 
-//Get all the orders that
+//Gets for: WORKER: [being-prepared, prepared] / PRICE-SETTER: [priced, being_priced] / INSPECTOR: [verified, being_verified]
 router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
+    //Todo paginate???
     try
     {
         const orderTypes= components.findTypesByRole({role:req.user.role, isAll:true});
@@ -190,19 +178,31 @@ router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
 });
 
 
+//Gets all order of a Worker / Price-Setter / Inspector
 router.get('/orders/me',auth.userAuth, async(req,res)=>{
+    /** Paginated **/
+
     try
     {
+        const page = parseInt(req.query.page) || constants.pageDefault; // Current page number, default to 1
+        const limit = parseInt(req.query.limit) || constants.limitDefault; // Number of posts per page, default to 3
+
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
         const filterId = components.filterByRole({role:req.user.role});
 
-        const o= await Order.find({[filterId]: req.user._id}, null, { sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
+        const o= await Order.find({[filterId]: req.user._id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
 
         if(!o)
         {
             return res.status(200).send({});
         }
 
-        return res.status(200).send(components.prepareOrder({o:o}));
+        //Calculate the pagination and return it in a Map.
+        const pagination= await Order.paginationCalculator({page:page, limit:limit, filter:{[filterId]:req.user._id} });
+
+        return res.status(200).send(components.prepareOrder({o:o, pagination:pagination}));
     }
     catch (e)
     {
@@ -319,5 +319,120 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
     }
 });
 
+
+/** Worker Orders **/
+
+//Get Orders of a specific worker
+router.get('/orders/worker/:id',auth.managerAuth,async (req,res)=>{
+
+    /** Paginated **/
+
+    try
+    {
+        const id = req.params.id;
+
+        const page = parseInt(req.query.page) || constants.pageDefault; // Current page number, default to 1
+        const limit = parseInt(req.query.limit) || constants.limitDefault; // Number of posts per page, default to 3
+
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
+        const o = await Order.find({workerId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        if(!o)
+        {
+            return res.status(404).send({error:'No Orders have been found'});
+        }
+
+        //Calculate the pagination and return it in a Map.
+        const pagination= await Order.paginationCalculator({page:page, limit:limit, filter:{workerId:id} });
+
+        return res.status(200).send(components.prepareOrder({o:o, pagination: pagination}));
+    }
+
+    catch (e)
+    {
+        console.log(`Couldn't get orders of this worker, ${e.message}`);
+        res.status(400).send({error:"Couldn't get the orders of this worker", message:e.message});
+    }
+});
+
+
+
+/** PriceSetters Orders **/
+
+//Get Orders of a specific priceSetter
+router.get('/orders/priceSetter/:id',auth.managerAuth,async (req,res)=>{
+
+    /** Paginated **/
+
+    try
+    {
+        const id = req.params.id;
+
+        const page = parseInt(req.query.page) || constants.pageDefault; // Current page number, default to 1
+        const limit = parseInt(req.query.limit) || constants.limitDefault; // Number of posts per page, default to 3
+
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
+        const o = await Order.find({priceSetterId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        if(!o)
+        {
+            return res.status(404).send({error:'No Orders have been found'});
+        }
+
+        //Calculate the pagination and return it in a Map.
+        const pagination= await Order.paginationCalculator({page:page, limit:limit, filter:{priceSetterId:id} });
+
+        return res.status(200).send(components.prepareOrder({o:o, pagination: pagination}));
+    }
+
+    catch (e)
+    {
+        console.log(`Couldn't get orders of this price Setter, ${e.message}`);
+        res.status(400).send({error:"Couldn't get the orders of this price Setter", message:e.message});
+    }
+});
+
+
+
+/** Inspectors Orders **/
+
+//Get Orders of a specific inspector
+router.get('/orders/inspector/:id',auth.managerAuth,async (req,res)=>{
+
+    /** Paginated **/
+
+    try
+    {
+        const id = req.params.id;
+
+        const page = parseInt(req.query.page) || constants.pageDefault; // Current page number, default to 1
+        const limit = parseInt(req.query.limit) || constants.limitDefault; // Number of posts per page, default to 3
+
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
+        const o = await Order.find({inspectorId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        if(!o)
+        {
+            return res.status(404).send({error:'No Orders have been found'});
+        }
+
+        //Calculate the pagination and return it in a Map.
+        const pagination= await Order.paginationCalculator({page:page, limit:limit, filter:{inspectorId:id} });
+
+        return res.status(200).send(components.prepareOrder({o:o, pagination: pagination}));
+    }
+
+    catch (e)
+    {
+        console.log(`Couldn't get orders of this inspector, ${e.message}`);
+        res.status(400).send({error:"Couldn't get the orders of this inspector", message:e.message});
+    }
+});
 
 export default router;

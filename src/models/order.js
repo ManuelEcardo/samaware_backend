@@ -373,6 +373,32 @@ orderSchema.virtual('itemsDetails', {
     justOne: false
 });
 
+//Calculate the Pagination and return the data
+orderSchema.statics.paginationCalculator= async function ({page,limit, filter={}})
+{
+    // Count the total number of orders
+    const totalCount = await Order.countDocuments(filter);
+
+    // Calculate the total number of pages
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Build pagination links
+    const pagination = {
+        currentPage: page,
+        totalPages,
+    };
+
+    if (page < totalPages) {
+        pagination.nextPage = `?page=${page + 1}&limit=${limit}`;
+    }
+
+    if (page > 1) {
+        pagination.prevPage = `?page=${page - 1}&limit=${limit}`;
+    }
+
+    return pagination;
+}
+
 orderSchema.pre('find', function (next) {
     this.sort({ updatedAt: -1 });
     next();

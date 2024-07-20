@@ -5,7 +5,7 @@ import components from "../shared/components.js";
 import socketManager from '../index.js';
 const router= express.Router();
 
-//USERS
+/** USERS API **/
 
 //Add a New User
 router.post('/addUser', async (req,res)=>{
@@ -107,20 +107,6 @@ router.patch('/users/me', auth.userAuth, async (req, res) => {
 
 });
 
-//Delete a User, uses middleware for auth.authentication
-router.delete('/users/delete', auth.userAuth, async (req, res) => {
-    try {
-        const u = await User.findOneAndDelete(req.user._id);
-        if (!u) {
-            res.status(404).send({'error': 'no such user'}); //Was 4040
-        }
-
-        res.send(req.user);
-    } catch (e) {
-        res.status(500).send(e);
-    }
-});
-
 //Login a User
 router.post('/users/login', async (req,res)=>{
 
@@ -169,8 +155,24 @@ router.post('/users/logoutAll',auth.userAuth, async (req, res)=>{
 
 });
 
+//Delete a User, uses middleware for auth.authentication
+router.delete('/users/delete', auth.userAuth, async (req, res) => {
+    try {
+        const u = await User.findOneAndDelete(req.user._id);
+        if (!u) {
+            res.status(404).send({'error': 'no such user'}); //Was 4040
+        }
 
-//WORKERS
+        res.send(req.user);
+    } catch (e) {
+        res.status(500).send(e);
+    }
+});
+
+
+
+/** WORKERS **/
+
 
 //Get Workers with their orders
 router.get('/workers/details',auth.managerAuth,async (req,res)=>{
@@ -215,7 +217,7 @@ router.get('/workers/details',auth.managerAuth,async (req,res)=>{
 });
 
 //Get Workers, only for manager
-router.get('/workers/',auth.managerAuth,async (req,res)=>{
+router.get('/workers/all',auth.managerAuth,async (req,res)=>{
 
     try
     {
@@ -237,7 +239,76 @@ router.get('/workers/',auth.managerAuth,async (req,res)=>{
     }
 });
 
-//PriceSetters
+//Get a Specific Worker with data By ID
+router.get('/worker/:id',auth.managerAuth, async (req, res) => {
+
+    try {
+        const id = req.params.id;
+        const u = await User.findOne({_id:id, role:'worker'}).populate({
+            path: 'orders',
+            options: { sort: { updatedAt: -1 } },
+            populate: [
+                {
+                    path: 'itemsDetails',
+                    model: 'Item',
+                    select: 'itemId name color',
+                },
+
+                {
+                    path:'inspectorId',
+                    model:'User'
+                },
+
+                {
+                    path:'priceSetterId',
+                    model:'User'
+                },
+            ],
+
+        });
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No Worker has been found'});
+        }
+
+        res.status(200).send(components.prepareSingleWorker({worker:u}));
+
+        //res.status(200).send(u);
+    }
+    catch (e)
+    {
+        res.status(500).send({error:'Error while getting worker details by ID', message:e.message});
+    }
+});
+
+
+
+/** PriceSetters **/
+
+
+//Get all priceSetters, no details
+router.get('/priceSetters/all', auth.managerAuth, async(req,res)=>{
+
+    try
+    {
+        const u= await User.find({role:'priceSetter'});
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No priceSetters have been found'});
+        }
+
+        res.status(200).send({priceSetters:u});
+    }
+    catch (e)
+    {
+        console.log(`ERROR WHILE GETTING ALL PRICE SETTERS, ${e.message}`);
+
+        res.status(500).send({error:'ERROR WHILE GETTING ALL PRICE SETTERS', message:e.message});
+    }
+});
+
 
 //Get PriceSetters with their details
 router.get('/priceSetters/details',auth.managerAuth,async (req,res)=>{
@@ -280,8 +351,74 @@ router.get('/priceSetters/details',auth.managerAuth,async (req,res)=>{
     }
 });
 
+//Get a Specific priceSetter with data By ID
+router.get('/priceSetter/:id',auth.managerAuth, async (req, res) => {
 
-//Inspector
+    try {
+        const id = req.params.id;
+        const u = await User.findOne({_id:id, role:'priceSetter'}).populate({
+            path: 'priceSetterOrders',
+            options: { sort: { updatedAt: -1 } },
+            populate: [
+                {
+                    path: 'itemsDetails',
+                    model: 'Item',
+                    select: 'itemId name color',
+                },
+
+                {
+                    path:'workerId',
+                    model:'User'
+                },
+
+                {
+                    path:'inspectorId',
+                    model:'User'
+                },
+            ],
+
+        });
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No priceSetter has been found'});
+        }
+
+        res.status(200).send(components.prepareSinglePriceSetter({priceSetter:u}));
+
+    }
+    catch (e)
+    {
+        res.status(500).send({error:'Error while getting priceSetter details by ID', message:e.message});
+    }
+});
+
+
+
+/** Inspector **/
+
+
+//Get all inspectors, no details
+router.get('/inspectors/all', auth.managerAuth, async(req,res)=>{
+
+    try
+    {
+        const u= await User.find({role:'inspector'});
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No priceSetters have been found'});
+        }
+
+        res.status(200).send({inspectors:u});
+    }
+    catch (e)
+    {
+        console.log(`ERROR WHILE GETTING ALL INSPECTORS, ${e.message}`);
+
+        res.status(500).send({error:'ERROR WHILE GETTING ALL PRICE SETTERS', message:e.message});
+    }
+});
 
 //Get Inspectors with their details
 router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
@@ -306,8 +443,6 @@ router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
                     path:'priceSetterId',
                     model:'User'
                 },
-
-
             ],
         });
 
@@ -316,7 +451,7 @@ router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
             return res.status(404).send({'error':'No inspectors have been found'});
         }
 
-        res.status(200).send(components.prepareInspector({inspectors:u}));
+        res.status(200).send(components.prepareInspectors({inspectors:u}));
 
     }
     catch (e)
@@ -325,5 +460,48 @@ router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
         res.status(400).send({error:"Couldn't get workers", message:e.message});
     }
 });
+
+//Get a Specific inspector with data By ID
+router.get('/inspector/:id',auth.managerAuth, async (req, res) => {
+
+    try {
+        const id = req.params.id;
+        const u = await User.findOne({_id:id, role:'inspector'}).populate({
+            path: 'inspectorOrders',
+            options: { sort: { updatedAt: -1 } },
+            populate: [
+                {
+                    path: 'itemsDetails',
+                    model: 'Item',
+                    select: 'itemId name color',
+                },
+
+                {
+                    path:'workerId',
+                    model:'User'
+                },
+
+                {
+                    path:'priceSetterId',
+                    model:'User'
+                },
+            ],
+
+        });
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No inspector has been found'});
+        }
+
+        res.status(200).send(components.prepareSingleInspector({inspector:u}));
+
+    }
+    catch (e)
+    {
+        res.status(500).send({error:'Error while getting inspector details by ID', message:e.message});
+    }
+});
+
 
 export default router

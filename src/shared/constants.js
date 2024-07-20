@@ -1,11 +1,16 @@
 const SignKey='default_Key_to_sign';
 
-//Store the ws connected clients
+/** Store the ws connected clients **/
 let clients = new Map();
 
-//Store manager connected via ws
+/** Store manager connected via ws **/
 let wsManager = new Map();
 
-//Allowed fields to be updated in order
+/** Allowed fields to be updated in order **/
 const allowedOrderUpdates=['id', 'workerId', 'clientId', 'status', 'registration_date','shipping_date','preparation_starting_date','preparation_end_date',];
-export default {SignKey, clients, wsManager}
+
+/** Pagination Defaults **/
+const pageDefault=1;
+const limitDefault=2;
+
+export default {SignKey, clients, wsManager, pageDefault, limitDefault}

@@ -5,12 +5,10 @@ import jwt from "jsonwebtoken";
 
 /** ORDERS PREPARE **/
 
-function prepareOrders({o})
+function prepareOrders({o, pagination})
 {
-    return o.map(order =>
-    {
-        const itemsWithDetails = order.items.map(item =>
-        {
+    const processedOrders = o.map(order => {
+        const itemsWithDetails = order.items.map(item => {
             const details = order.itemsDetails.find(detail => detail.itemId === item.itemId);
             return {
                 itemId: item.itemId,
@@ -20,20 +18,18 @@ function prepareOrders({o})
             };
         });
 
-        order.items=null; //Don't want the items to be returned
+        order.items = null; // Don't want the items to be returned
 
         return {
-            // _id:order._id,
-            // orderId: order.orderId,
-            // registration_date: order.registration_date,
-            // shipping_date: order.shipping_date,
-            // status: order.status,
-            // workerId: order.workerId,
-            // items: itemsWithDetails
-            order:order,
-            items:itemsWithDetails,
+            order: order,
+            items: itemsWithDetails
         };
     });
+
+    return {
+        orders: processedOrders,
+        ...(pagination && { pagination })
+    };
 
 }
 
@@ -73,7 +69,7 @@ function prepareSingleOrder({order})
 
 //WORKER PREPARE
 
-/** prepare the worker details **/
+/** prepare the workers details **/
 function prepareWorkers({workers})
 {
     return workers.map(worker => {
@@ -86,12 +82,25 @@ function prepareWorkers({workers})
     });
 }
 
+
+
+/** prepare a worker details **/
+function prepareSingleWorker({worker})
+{
+    const preparedOrders = prepareOrders({o:worker.orders});
+    const workerObject = worker.toJSON();
+    return {
+        ...workerObject,
+        orders: preparedOrders
+    };
+}
+
 //--------------------
 
 
 //INSPECTOR PREPARE
 
-/** prepare the inspector details **/
+/** prepare inspectors details **/
 function prepareInspectors({inspectors})
 {
     return inspectors.map(inspector => {
@@ -104,9 +113,21 @@ function prepareInspectors({inspectors})
     });
 }
 
+/** prepare an inspector details **/
+function prepareSingleInspector({inspector})
+{
+    const preparedOrders = prepareOrders({o:inspector.inspectorOrders});
+    const inspectorObject = inspector.toJSON();
+    return {
+        ...inspectorObject,
+        orders: preparedOrders
+    };
+
+}
 
 //PRICE-SETTER PREPARE
 
+/** prepare priceSetters details **/
 function preparePriceSetters({priceSetters})
 {
     return priceSetters.map(priceSetter => {
@@ -117,6 +138,19 @@ function preparePriceSetters({priceSetters})
             orders: preparedOrders
         };
     });
+}
+
+
+
+/** prepare a priceSetter details **/
+function prepareSinglePriceSetter({priceSetter})
+{
+    const preparedOrders = prepareOrders({o:priceSetter.priceSetterOrders});
+    const priceSetterObject = priceSetter.toJSON();
+    return {
+        ...priceSetterObject,
+        orders: preparedOrders
+    };
 }
 
 //WEB SOCKETS
@@ -147,6 +181,7 @@ async function wsAuth (message)
 
 
 /**Check what does this WS message mean**/
+
 // function analyzeWsMessage(msg)
 // {
 //     switch (msg.todo)
@@ -275,6 +310,6 @@ function filterByRole({role})
 }
 
 export default {prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, preparePriceSetters,
-                wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole, prepareInspector: prepareInspectors,
-                filterByRole,
+                wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole, prepareInspectors,
+                filterByRole, prepareSingleWorker, prepareSinglePriceSetter, prepareSingleInspector
                 }
