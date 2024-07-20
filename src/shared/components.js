@@ -225,13 +225,14 @@ function wsNotifyInclinedClients({order})
 {
     try
     {
-        const status = order.status; //Getting the order status
+        const status = order.order.status; //Getting the order status
 
         constants.clients.forEach((client)=>
         {
             switch (status)
             {
                 case 'prepared':
+                case 'being_priced':
 
                     if(client.ws.user.role === 'priceSetter')
                     {
@@ -240,6 +241,8 @@ function wsNotifyInclinedClients({order})
                     break;
 
                 case 'priced':
+                case 'being_verified':
+                case 'verified':
 
                     if(client.ws.user.role === 'inspector')
                     {
@@ -265,7 +268,7 @@ function wsFindClient({clientId, json})
     {
         if(client.ws.user._id.toString() === clientId.toString())
         {
-            return client.ws.send(JSON.stringify(json));
+            return client.ws.send(JSON.stringify({type: 'order'})); //was stringify(json)
         }
     });
 }
