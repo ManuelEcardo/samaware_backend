@@ -22,6 +22,35 @@ router.post("/items/add", auth.managerAuth, async (req,res)=>{
     }
 });
 
+router.post('/items/addItem',async (req,res)=>{
+
+    try
+    {
+        const items = req.body.data;
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            console.log('NO DATA...');
+            return res.status(400).send({ error: 'Invalid data format or empty data array' });
+        }
+
+        const result = await Item.insertMany(items, { ordered: false });
+
+        if(!result)
+        {
+            console.log('no data');
+            return res.status(400).send({message:'no data'});
+        }
+
+        console.log('inserted successfully');
+
+        res.status(201).send({ message: 'Items inserted successfully' });
+    }
+    catch (e)
+    {
+        console.log(`ERROR WHILE RECEIVING ADD ITEM, ${e.message} ${e.stackTrace}`);
+        res.status(500).send({'error':e, message:e.message});
+    }
+});
 
 //Get all items
 router.get('/items/',auth.managerAuth,async(req,res)=>{

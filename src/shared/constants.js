@@ -11,6 +11,6 @@ const allowedOrderUpdates=['id', 'workerId', 'clientId', 'status', 'registration
 
 /** Pagination Defaults **/
 const pageDefault=1;
-const limitDefault=2;
+const limitDefault=3;
 
 export default {SignKey, clients, wsManager, pageDefault, limitDefault}
