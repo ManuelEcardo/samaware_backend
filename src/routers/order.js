@@ -64,6 +64,36 @@ router.get('/orders/id', auth.managerAuth, async (req,res)=>{
     }
 });
 
+//Get Orders by Search Filters provided by end user
+
+router.post('/orders/search',auth.managerAuth, async(req,res)=>{
+
+    try
+    {
+        const details= req.body;
+
+        let filter = {};
+
+        if (details.id) filter['orderId'] = details.id;
+        if (details.workerId) filter['workerId'] = details.workerId;
+        if (details.priceSetterId) filter['priceSetterId'] = details.priceSetterId;
+        if (details.inspectorId) filter['inspectorId'] = details.inspectorId;
+
+        const o = await Order.find(filter, null, {sort:{updatedAt:-1, createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+
+        if(!o)
+        {
+            return res.status(404).send({error:'no orders have been found'});
+        }
+
+        return res.status(200).send(components.prepareOrder({o:o}));
+    }
+    catch (e)
+    {
+        return res.status(500).send({error:'error while retrieving orders', message:e.message});
+    }
+});
+
 //Get a worker's orders waiting to be prepared
 router.get('/orders/workerRole/waiting_me', auth.userAuth,async (req,res)=>{
 
@@ -214,7 +244,7 @@ router.get('/orders/me',auth.userAuth, async(req,res)=>{
 router.get('/orders/nonReady', auth.managerAuth, async(req,res)=>{
     try
     {
-        const o = await Order.find({'status':{$nin:['stored','failed','shipped'], }},null,{ sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({'status':{$nin:['stored','failed','shipped'], }},null,{ sort:{updatedAt: -1, createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
         return res.status(200).send(components.prepareOrder({o:o}));
 
