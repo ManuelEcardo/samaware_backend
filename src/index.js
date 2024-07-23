@@ -63,7 +63,7 @@ wsApp.ws('/webSocket',function (ws,req){ //was (ws,req).
                     {
                         constants.clients.set(msg.clientId.toString(), { ws, ip: req.socket.remoteAddress, role:ws.user.role });
 
-                        console.log(`Registered client with id: ${msg.clientId} and IP: ${req.socket.remoteAddress}`);
+                        console.log(`Registered client with id: ${msg.clientId} and IP: ${req.socket.remoteAddress} and Role: ${ws.user.role}`);
                     }
 
                 }

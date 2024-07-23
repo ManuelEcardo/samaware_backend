@@ -19,7 +19,7 @@ router.get('/orders', auth.managerAuth,  async (req,res)=>{
         // Calculate the skip value
         const skip = (page - 1) * limit;
 
-        const o = await Order.find({},null,{limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({},null,{limit:limit, skip:skip, sort:{updatedAt:-1, createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
         //Calculate the pagination and return it in a Map.

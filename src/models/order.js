@@ -1,10 +1,10 @@
 import mongoose, {Schema} from "mongoose";
 import moment from "moment";
 
-//Todo: for each Order, there should be fields for priceSetters and inspectors like  it is available for workers, so we can get data about who took actions in this order
 
 const orderSchema = new mongoose.Schema({
 
+    // Data from Excel File
     orderId:{
         type:String,
         trim:false,
@@ -51,7 +51,7 @@ const orderSchema = new mongoose.Schema({
         }
     },
 
-    //Times for each step
+    // Dates for each step
 
     waiting_to_be_prepared_date:{
         type:String,
@@ -303,7 +303,7 @@ const orderSchema = new mongoose.Schema({
         }
     },
 
-
+    // ids for contributors
 
     workerId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -336,6 +336,14 @@ const orderSchema = new mongoose.Schema({
                 'being_verified','verified','re_prepare','waiting_to_ship','stored','shipped','failed'],
         required: true,
         default:'waiting_to_be_prepared'
+    },
+
+    failure_reason:{
+        type:String,
+        required:false,
+        enum:['no_available_items_failure','other_reason_failure', //Worker Failures
+                'wrong_items_failure' //Inspector Reasons
+        ],
     },
 
     items:
