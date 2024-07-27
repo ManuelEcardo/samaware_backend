@@ -1,7 +1,7 @@
 import mongoose, {Schema} from "mongoose";
+import constants from "../shared/constants.js";
 
-
-mongoose.connect('mongodb://127.0.0.1:27017/samahware', {autoIndex:true}).then((result)=>
+mongoose.connect(constants.atlasUrl, {autoIndex:true}).then((result)=>
 {
     console.log("Connected to Database Successfully");
 

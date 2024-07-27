@@ -1,5 +1,9 @@
 const SignKey='default_Key_to_sign';
 
+const localUrl='mongodb://127.0.0.1:27017/samahware';
+
+const atlasUrl='mongodb+srv://GaryMorge:ZG6qoffoOwIGmIL6@cluster0.g8wf9vk.mongodb.net/samahware';
+
 /** Store the ws connected clients **/
 let clients = new Map();
 
@@ -13,4 +17,4 @@ const allowedOrderUpdates=['id', 'workerId', 'clientId', 'status', 'registration
 const pageDefault=1;
 const limitDefault=3;
 
-export default {SignKey, clients, wsManager, pageDefault, limitDefault}
+export default {SignKey, clients, wsManager, pageDefault, limitDefault, localUrl, atlasUrl}

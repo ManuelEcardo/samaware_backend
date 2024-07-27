@@ -78,6 +78,7 @@ router.post('/orders/search',auth.managerAuth, async(req,res)=>{
         if (details.workerId) filter['workerId'] = details.workerId;
         if (details.priceSetterId) filter['priceSetterId'] = details.priceSetterId;
         if (details.inspectorId) filter['inspectorId'] = details.inspectorId;
+        if(details.status) filter['status']=details.status;
 
         const o = await Order.find(filter, null, {sort:{updatedAt:-1, createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
