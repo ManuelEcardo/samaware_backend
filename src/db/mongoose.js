@@ -7,6 +7,7 @@ mongoose.connect(constants.atlasUrl, {autoIndex:true}).then((result)=>
 
 }).catch((error)=>
 {
+
     console.log("Couldn't Connect using Mongoose"+error.toString() );
 });
 

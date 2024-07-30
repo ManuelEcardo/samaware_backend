@@ -10,6 +10,11 @@ import constants from "./shared/constants.js";
 import components from "./shared/components.js";
 
 import bodyParser from 'body-parser';
+import dotenv from "dotenv";
+
+
+// Load environment variables from .env file
+dotenv.config();
 
 const app= express();
 const port=3000;
@@ -25,7 +30,6 @@ app.use(express.json({limit:'50mb'}));
 app.use(userRouter);
 app.use(orderRouter);
 app.use(itemRouter);
-
 
 //TBD FOR ITEMS INSERTION
 //app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -70,14 +74,7 @@ wsApp.ws('/webSocket',function (ws,req){ //was (ws,req).
 
                 else if (msg.type === 'message' && msg.clientId)
                 {
-
-                    // // Send message to specific client
-                    // const targetClient = constants.clients.get(msg.clientId);
-                    //
-                    // if (targetClient)
-                    // {
-                    //     targetClient.ws.send(JSON.stringify({ from: msg.id, message: msg.content }));
-                    // }
+                    // Send message to specific client
                 }
             }
 

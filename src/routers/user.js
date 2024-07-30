@@ -174,47 +174,47 @@ router.delete('/users/delete', auth.userAuth, async (req, res) => {
 /** WORKERS **/
 
 
-//Get Workers with their orders
-router.get('/workers/details',auth.managerAuth,async (req,res)=>{
-    try
-    {
-        const u = await User.find({role:'worker'}).populate({
-            path: 'orders',
-            options: { sort: { updatedAt: -1 } },
-            populate: [
-                {
-                    path: 'itemsDetails',
-                    model: 'Item',
-                    select: 'itemId name color',
-                },
-
-                {
-                    path:'inspectorId',
-                    model:'User'
-                },
-
-                {
-                    path:'priceSetterId',
-                    model:'User'
-                },
-            ],
-
-        });
-
-        if(!u)
-        {
-            return res.status(404).send({'error':'No workers have been found'});
-        }
-
-        res.status(200).send(components.prepareWorkers({workers:u}));
-
-    }
-    catch (e)
-    {
-        console.log(`Error While getting workers, ${e}`);
-        res.status(400).send({error:"Couldn't get workers", message:e.message});
-    }
-});
+//Get Workers with their orders  TBD
+// router.get('/workers/details',auth.managerAuth,async (req,res)=>{
+//     try
+//     {
+//         const u = await User.find({role:'worker'}).populate({
+//             path: 'orders',
+//             options: { sort: { updatedAt: -1 } },
+//             populate: [
+//                 {
+//                     path: 'itemsDetails',
+//                     model: 'Item',
+//                     select: 'itemId name color',
+//                 },
+//
+//                 {
+//                     path:'inspectorId',
+//                     model:'User'
+//                 },
+//
+//                 {
+//                     path:'priceSetterId',
+//                     model:'User'
+//                 },
+//             ],
+//
+//         });
+//
+//         if(!u)
+//         {
+//             return res.status(404).send({'error':'No workers have been found'});
+//         }
+//
+//         res.status(200).send(components.prepareWorkers({workers:u}));
+//
+//     }
+//     catch (e)
+//     {
+//         console.log(`Error While getting workers, ${e}`);
+//         res.status(400).send({error:"Couldn't get workers", message:e.message});
+//     }
+// });
 
 //Get Workers, only for manager
 router.get('/workers/all',auth.managerAuth,async (req,res)=>{
@@ -310,46 +310,46 @@ router.get('/priceSetters/all', auth.managerAuth, async(req,res)=>{
 });
 
 
-//Get PriceSetters with their details
-router.get('/priceSetters/details',auth.managerAuth,async (req,res)=>{
-    try
-    {
-        const u = await User.find({role:'priceSetter'}).populate({
-            path: 'priceSetterOrders',
-            options: { sort: { updatedAt: -1 } },
-            populate:[
-                {
-                    path: 'itemsDetails',
-                    model: 'Item',
-                    select: 'itemId name color',
-                },
-
-                {
-                    path:'workerId',
-                    model:'User'
-                },
-
-                {
-                    path:'inspectorId',
-                    model:'User'
-                },
-            ],
-        },);
-
-        if(!u)
-        {
-            return res.status(404).send({'error':'No priceSetters have been found'});
-        }
-
-        res.status(200).send(components.preparePriceSetters({priceSetters:u}));
-
-    }
-    catch (e)
-    {
-        console.log(`Error While getting workers, ${e}`);
-        res.status(400).send({error:"Couldn't get workers", message:e.message});
-    }
-});
+//Get PriceSetters with their details TBD
+// router.get('/priceSetters/details',auth.managerAuth,async (req,res)=>{
+//     try
+//     {
+//         const u = await User.find({role:'priceSetter'}).populate({
+//             path: 'priceSetterOrders',
+//             options: { sort: { updatedAt: -1 } },
+//             populate:[
+//                 {
+//                     path: 'itemsDetails',
+//                     model: 'Item',
+//                     select: 'itemId name color',
+//                 },
+//
+//                 {
+//                     path:'workerId',
+//                     model:'User'
+//                 },
+//
+//                 {
+//                     path:'inspectorId',
+//                     model:'User'
+//                 },
+//             ],
+//         },);
+//
+//         if(!u)
+//         {
+//             return res.status(404).send({'error':'No priceSetters have been found'});
+//         }
+//
+//         res.status(200).send(components.preparePriceSetters({priceSetters:u}));
+//
+//     }
+//     catch (e)
+//     {
+//         console.log(`Error While getting workers, ${e}`);
+//         res.status(400).send({error:"Couldn't get workers", message:e.message});
+//     }
+// });
 
 //Get a Specific priceSetter with data By ID
 router.get('/priceSetter/:id',auth.managerAuth, async (req, res) => {
@@ -420,46 +420,46 @@ router.get('/inspectors/all', auth.managerAuth, async(req,res)=>{
     }
 });
 
-//Get Inspectors with their details
-router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
-    try
-    {
-        const u = await User.find({role:'inspector'}).populate({
-            path: 'inspectorOrders',
-            options: { sort: { updatedAt: -1 } },
-            populate: [
-                {
-                    path: 'itemsDetails',
-                    model: 'Item',
-                    select: 'itemId name color',
-                },
-
-                {
-                    path:'workerId',
-                    model:'User'
-                },
-
-                {
-                    path:'priceSetterId',
-                    model:'User'
-                },
-            ],
-        });
-
-        if(!u)
-        {
-            return res.status(404).send({'error':'No inspectors have been found'});
-        }
-
-        res.status(200).send(components.prepareInspectors({inspectors:u}));
-
-    }
-    catch (e)
-    {
-        console.log(`Error While getting workers, ${e}, ${e.stack}`);
-        res.status(400).send({error:"Couldn't get workers", message:e.message});
-    }
-});
+// //Get Inspectors with their details TBD
+// router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
+//     try
+//     {
+//         const u = await User.find({role:'inspector'}).populate({
+//             path: 'inspectorOrders',
+//             options: { sort: { updatedAt: -1 } },
+//             populate: [
+//                 {
+//                     path: 'itemsDetails',
+//                     model: 'Item',
+//                     select: 'itemId name color',
+//                 },
+//
+//                 {
+//                     path:'workerId',
+//                     model:'User'
+//                 },
+//
+//                 {
+//                     path:'priceSetterId',
+//                     model:'User'
+//                 },
+//             ],
+//         });
+//
+//         if(!u)
+//         {
+//             return res.status(404).send({'error':'No inspectors have been found'});
+//         }
+//
+//         res.status(200).send(components.prepareInspectors({inspectors:u}));
+//
+//     }
+//     catch (e)
+//     {
+//         console.log(`Error While getting workers, ${e}, ${e.stack}`);
+//         res.status(400).send({error:"Couldn't get workers", message:e.message});
+//     }
+// });
 
 //Get a Specific inspector with data By ID
 router.get('/inspector/:id',auth.managerAuth, async (req, res) => {

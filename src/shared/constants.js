@@ -1,8 +1,13 @@
-const SignKey='default_Key_to_sign';
+import dotenv from "dotenv";
 
-const localUrl='mongodb://127.0.0.1:27017/samahware';
+dotenv.config();
 
-const atlasUrl='mongodb+srv://GaryMorge:ZG6qoffoOwIGmIL6@cluster0.g8wf9vk.mongodb.net/samahware';
+const SignKey= process.env.SIGN_KEY; //'default_Key_to_sign';
+
+const localUrl= process.env.LOCAL_URL; //'mongodb://127.0.0.1:27017/samahware';
+
+const atlasUrl= process.env.ATLAS_URL; //'mongodb+srv://GaryMorge:ZG6qoffoOwIGmIL6@cluster0.g8wf9vk.mongodb.net/samahware';
+
 
 /** Store the ws connected clients **/
 let clients = new Map();

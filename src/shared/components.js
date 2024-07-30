@@ -141,7 +141,6 @@ function preparePriceSetters({priceSetters})
 }
 
 
-
 /** prepare a priceSetter details **/
 function prepareSinglePriceSetter({priceSetter})
 {
@@ -178,29 +177,6 @@ async function wsAuth (message)
         return null;
     }
 }
-
-
-/**Check what does this WS message mean**/
-
-// function analyzeWsMessage(msg)
-// {
-//     switch (msg.todo)
-//     {
-//         //Assign => an order will be sent to a worker
-//         case 'assign':
-//             console.log('');
-//             break;
-//
-//         //Update order data or status
-//         case 'update':
-//             console.log('');
-//             break;
-//
-//         default:
-//             break;
-//
-//     }
-// }
 
 
 /** Notify manager via ws **/
