@@ -2,9 +2,9 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const SignKey= process.env.SIGN_KEY; //'default_Key_to_sign';
+const SignKey=process.env.SIGN_KEY; //'default_Key_to_sign';
 
-const localUrl= process.env.LOCAL_URL; //'mongodb://127.0.0.1:27017/samahware';
+const localUrl=process.env.LOCAL_URL;  //'mongodb://127.0.0.1:27017/samahware';
 
 const atlasUrl= process.env.ATLAS_URL; //'mongodb+srv://GaryMorge:ZG6qoffoOwIGmIL6@cluster0.g8wf9vk.mongodb.net/samahware';
 

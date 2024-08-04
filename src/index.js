@@ -9,6 +9,8 @@ import expressWs from 'express-ws';
 import constants from "./shared/constants.js";
 import components from "./shared/components.js";
 
+import https from "https";
+import fs from "fs";
 import bodyParser from 'body-parser';
 import dotenv from "dotenv";
 
@@ -129,5 +131,19 @@ app.listen(port,()=>
     console.log(`Express is Up on port ${port}`);
 });
 
+
+const httpsPort = 4443;
+
+// Read SSL certificate and key files
+const options = {
+    key: fs.readFileSync(process.env.SSL_KEY_PATH),
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH)
+};
+
+
+// Create HTTPS server
+https.createServer(options, app).listen(httpsPort, () => {
+    console.log(`HTTPS Server is running on port ${httpsPort}`);
+});
 
 export default socketManager
