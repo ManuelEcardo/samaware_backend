@@ -26,7 +26,7 @@ router.post('/addUser', async (req,res)=>{
     }
 });
 
-//Get All Users,  Parameters are: PATH - Middleware - Handlers
+//Get All Users
 router.get('/users', auth.userAuth, async (req, res) => {
     try {
         const u= await User.find({});
@@ -37,7 +37,7 @@ router.get('/users', auth.userAuth, async (req, res) => {
     }
 })
 
-//Get Your User Data,  Parameters are: PATH - Middleware - Handlers
+//Get Your User Data
 router.get('/users/me', auth.userAuth, async (req, res) => {
     res.status(201).send(req.user); // The User came from request since we did it in the auth.auth function, we did set the req.user to the user that was found.
 });
@@ -242,7 +242,8 @@ router.get('/workers/all',auth.managerAuth,async (req,res)=>{
 //Get a Specific Worker with data By ID
 router.get('/worker/:id',auth.managerAuth, async (req, res) => {
 
-    try {
+    try
+    {
         const id = req.params.id;
         const u = await User.findOne({_id:id, role:'worker'}).populate({
             path: 'orders',
@@ -263,6 +264,16 @@ router.get('/worker/:id',auth.managerAuth, async (req, res) => {
                     path:'priceSetterId',
                     model:'User'
                 },
+
+                {
+                    path:'scannerId',
+                    model:'User'
+                },
+
+                {
+                    path:'collectorId',
+                    model:'User'
+                },
             ],
 
         });
@@ -276,6 +287,7 @@ router.get('/worker/:id',auth.managerAuth, async (req, res) => {
 
         //res.status(200).send(u);
     }
+
     catch (e)
     {
         res.status(500).send({error:'Error while getting worker details by ID', message:e.message});
@@ -354,7 +366,8 @@ router.get('/priceSetters/all', auth.managerAuth, async(req,res)=>{
 //Get a Specific priceSetter with data By ID
 router.get('/priceSetter/:id',auth.managerAuth, async (req, res) => {
 
-    try {
+    try
+    {
         const id = req.params.id;
         const u = await User.findOne({_id:id, role:'priceSetter'}).populate({
             path: 'priceSetterOrders',
@@ -375,6 +388,16 @@ router.get('/priceSetter/:id',auth.managerAuth, async (req, res) => {
                     path:'inspectorId',
                     model:'User'
                 },
+
+                {
+                    path:'scannerId',
+                    model:'User'
+                },
+
+                {
+                    path:'collectorId',
+                    model:'User'
+                },
             ],
 
         });
@@ -387,6 +410,7 @@ router.get('/priceSetter/:id',auth.managerAuth, async (req, res) => {
         res.status(200).send(components.prepareSinglePriceSetter({priceSetter:u}));
 
     }
+
     catch (e)
     {
         res.status(500).send({error:'Error while getting priceSetter details by ID', message:e.message});
@@ -420,51 +444,11 @@ router.get('/inspectors/all', auth.managerAuth, async(req,res)=>{
     }
 });
 
-// //Get Inspectors with their details TBD
-// router.get('/inspectors/details',auth.managerAuth,async (req,res)=>{
-//     try
-//     {
-//         const u = await User.find({role:'inspector'}).populate({
-//             path: 'inspectorOrders',
-//             options: { sort: { updatedAt: -1 } },
-//             populate: [
-//                 {
-//                     path: 'itemsDetails',
-//                     model: 'Item',
-//                     select: 'itemId name color',
-//                 },
-//
-//                 {
-//                     path:'workerId',
-//                     model:'User'
-//                 },
-//
-//                 {
-//                     path:'priceSetterId',
-//                     model:'User'
-//                 },
-//             ],
-//         });
-//
-//         if(!u)
-//         {
-//             return res.status(404).send({'error':'No inspectors have been found'});
-//         }
-//
-//         res.status(200).send(components.prepareInspectors({inspectors:u}));
-//
-//     }
-//     catch (e)
-//     {
-//         console.log(`Error While getting workers, ${e}, ${e.stack}`);
-//         res.status(400).send({error:"Couldn't get workers", message:e.message});
-//     }
-// });
-
 //Get a Specific inspector with data By ID
 router.get('/inspector/:id',auth.managerAuth, async (req, res) => {
 
-    try {
+    try
+    {
         const id = req.params.id;
         const u = await User.findOne({_id:id, role:'inspector'}).populate({
             path: 'inspectorOrders',
@@ -485,7 +469,18 @@ router.get('/inspector/:id',auth.managerAuth, async (req, res) => {
                     path:'priceSetterId',
                     model:'User'
                 },
+
+                {
+                    path:'scannerId',
+                    model:'User'
+                },
+
+                {
+                    path:'collectorId',
+                    model:'User'
+                },
             ],
+
 
         });
 
@@ -497,11 +492,170 @@ router.get('/inspector/:id',auth.managerAuth, async (req, res) => {
         res.status(200).send(components.prepareSingleInspector({inspector:u}));
 
     }
+
     catch (e)
     {
         res.status(500).send({error:'Error while getting inspector details by ID', message:e.message});
     }
 });
 
+/** Collectors **/
+
+//Get all collectors, no details
+router.get('/collectors/all', auth.managerAuth, async(req,res)=>{
+    
+    try
+    {
+        const u= await User.find({role:'collector'});
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No Collectors have been found'});
+        }
+
+        res.status(200).send({collectors:u});
+    }
+    
+    catch (e)
+    {
+        console.log(`ERROR WHILE GETTING ALL COLLECTORS, ${e.message}`);
+
+        res.status(500).send({error:'ERROR WHILE GETTING ALL COLLECTORS', message:e.message});
+    }
+});
+
+//Get a Specific collector with data by ID
+router.get('/collectors/:id', auth.managerAuth, async(req,res)=>{
+
+    try
+    {
+        const id = req.params.id;
+        const u = await User.findOne({_id:id, role:'collector'}).populate({
+            path: 'collectorOrders',
+            options: { sort: { updatedAt: -1 } },
+            populate: [
+                {
+                    path: 'itemsDetails',
+                    model: 'Item',
+                    select: 'itemId name color',
+                },
+
+                {
+                    path:'workerId',
+                    model:'User'
+                },
+
+                {
+                    path:'priceSetterId',
+                    model:'User'
+                },
+
+                {
+                    path:'inspectorId',
+                    model:'User'
+                },
+
+                {
+                    path:'scannerId',
+                    model:'User'
+                },
+            ],
+
+        });
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No collector has been found'});
+        }
+
+        res.status(200).send(components.prepareSingleCollector({collector:u}));
+
+    }
+
+    catch (e)
+    {
+        res.status(500).send({error:'Error while getting inspector details by ID', message:e.message});
+    }
+});
+
+
+/** Scanners **/
+
+//Get all scanners, no details
+router.get('/scanners/all', auth.managerAuth, async(req,res)=>{
+
+    try
+    {
+        const u= await User.find({role:'scanner'});
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No Scanners have been found'});
+        }
+
+        res.status(200).send({scanners:u});
+    }
+
+    catch (e)
+    {
+        console.log(`ERROR WHILE GETTING ALL SCANNERS, ${e.message}`);
+
+        res.status(500).send({error:'ERROR WHILE GETTING ALL SCANNERS', message:e.message});
+    }
+});
+
+//Get a Specific scanner with data by ID
+router.get('/scanners/:id', auth.managerAuth, async(req,res)=>{
+
+    try
+    {
+        const id = req.params.id;
+        const u = await User.findOne({_id:id, role:'scanner'}).populate({
+            path: 'scannerOrders',
+            options: { sort: { updatedAt: -1 } },
+            populate: [
+                {
+                    path: 'itemsDetails',
+                    model: 'Item',
+                    select: 'itemId name color',
+                },
+
+                {
+                    path:'workerId',
+                    model:'User'
+                },
+
+                {
+                    path:'priceSetterId',
+                    model:'User'
+                },
+
+                {
+                    path:'inspectorId',
+                    model:'User'
+                },
+
+                {
+                    path:'collectorId',
+                    model:'User'
+                },
+            ],
+
+        });
+
+        if(!u)
+        {
+            return res.status(404).send({'error':'No scanner has been found'});
+        }
+
+        res.status(200).send(components.prepareSingleScanner({scanner:u}));
+
+    }
+
+    catch (e)
+    {
+        res.status(500).send({error:'Error while getting inspector details by ID', message:e.message});
+    }
+});
 
 export default router

@@ -152,6 +152,36 @@ function prepareSinglePriceSetter({priceSetter})
     };
 }
 
+
+//COLLECTORS PREPARE
+
+/** prepare a collector details **/
+function prepareSingleCollector({collector})
+{
+    const preparedOrders = prepareOrders({o:collector.collectorOrders});
+    const collectorObject = collector.toJSON();
+    return {
+        ...collectorObject,
+        orders: preparedOrders
+    };
+
+}
+
+
+//SCANNER PREPARE
+
+/** prepare a scanner details **/
+function prepareSingleScanner({scanner})
+{
+    const preparedOrders = prepareOrders({o:scanner.scannerOrders});
+    const scannerObject = scanner.toJSON();
+    return {
+        ...scannerObject,
+        orders: preparedOrders
+    };
+
+}
+
 //WEB SOCKETS
 
 /** Authentication WS **/
@@ -260,8 +290,16 @@ function findTypesByRole({role, isAll: isChecked = false})
         case 'priceSetter':
             return isChecked? ['being_priced', 'priced'] : ['prepared', 'being_priced'];
 
+
+        case 'collector':
+            return isChecked? ['being_collected', 'collected'] : ['prepared', 'being_collected'];
+
+
+        case 'scanner':
+            return isChecked? ['being_scanned', 'scanned'] : ['collected', 'being_scanned'];
+
         case 'inspector':
-            return isChecked? ['being_verified', 'verified'] :['priced', 'being_verified'];
+            return isChecked? ['being_verified', 'verified'] :['scanned', 'being_verified'];
 
         default:
             return [];
@@ -280,6 +318,12 @@ function filterByRole({role})
         case 'priceSetter':
             return 'priceSetterId';
 
+        case 'collector':
+            return 'collectorId';
+
+        case 'scanner':
+            return 'scannerId';
+
         case 'inspector':
             return 'inspectorId';
 
@@ -288,7 +332,8 @@ function filterByRole({role})
     }
 }
 
-export default {prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, preparePriceSetters,
-                wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole, prepareInspectors,
-                filterByRole, prepareSingleWorker, prepareSinglePriceSetter, prepareSingleInspector
+export default { prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, preparePriceSetters,
+                 wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole, prepareInspectors,
+                 filterByRole, prepareSingleWorker, prepareSinglePriceSetter, prepareSingleInspector,
+                 prepareSingleCollector, prepareSingleScanner
                 }

@@ -60,7 +60,7 @@ const userSchema= new mongoose.Schema({
 
     role: {
         type: String,
-        enum: ['manager', 'worker', 'priceSetter', 'inspector'],
+        enum: ['manager', 'worker', 'priceSetter', 'collector', 'scanner', 'inspector'],
         required: true
     }
 
@@ -87,6 +87,20 @@ userSchema.virtual('priceSetterOrders',{
     localField:'_id',
     foreignField:'priceSetterId',
 });
+
+userSchema.virtual('collectorOrders',{
+    ref:'Order',
+    localField:'_id',
+    foreignField:'collectorId',
+});
+
+userSchema.virtual('scannerOrders',{
+    ref:'Order',
+    localField:'_id',
+    foreignField:'scannerId',
+});
+
+
 
 //Hashing Password before Saving
 userSchema.pre('save',async function (next){

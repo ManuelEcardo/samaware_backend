@@ -1,5 +1,6 @@
 import mongoose, {Schema} from "mongoose";
 import moment from "moment";
+import constants from "../shared/constants.js";
 
 
 const orderSchema = new mongoose.Schema({
@@ -136,6 +137,90 @@ const orderSchema = new mongoose.Schema({
     },
 
     priced_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    being_collected_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    collected_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    being_scanned_date:{
+        type:String,
+        cast:false,
+        required:false,
+        trim:true,
+
+        validate(value)
+        {
+            return moment(value,'DD/MM/YYYY HH:mm:ss', true).isValid();
+        },
+
+        set: function (value)
+        {
+            const dateTime = moment(value, 'DD/MM/YYYY HH:mm:ss', true);
+            if (dateTime.isValid()) {
+                return dateTime.format('DD/MM/YYYY HH:mm:ss');
+            }
+            return value;
+        }
+    },
+
+    scanned_date:{
         type:String,
         cast:false,
         required:false,
@@ -317,6 +402,18 @@ const orderSchema = new mongoose.Schema({
         required: false
     },
 
+    collectorId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
+
+    scannerId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
+
     inspectorId:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -330,10 +427,22 @@ const orderSchema = new mongoose.Schema({
         cast: true,
     },
 
+    //Guys that help to pack the order
+    preparationTeam:[
+        {
+            _id:false,
+            name:{
+                type:String,
+                required:true,
+                enum:constants.preparationTeam,
+            },
+        },
+    ],
+
     status: {
         type: String,
-        enum: ['waiting_to_be_prepared', 'being_prepared', 'prepared','being_priced','priced',
-                'being_verified','verified','re_prepare','waiting_to_ship','stored','shipped','failed'],
+        enum: ['waiting_to_be_prepared', 'being_prepared', 'prepared','being_priced','priced', 'being_collected',
+                'collected', 'being_scanned', 'scanned', 'being_verified','verified','re_prepare','waiting_to_ship','stored','shipped','failed'],
         required: true,
         default:'waiting_to_be_prepared'
     },
@@ -351,22 +460,22 @@ const orderSchema = new mongoose.Schema({
         {
             //_id:false,
 
-                itemId:{
-                    type:String,
-                    required:true,
-                    ref:"Item",
-                },
+            itemId:{
+                type:String,
+                required:true,
+                ref:"Item",
+            },
 
-                quantity: {
-                    type: Number,
-                    required: true
-                },
+            quantity: {
+                type: Number,
+                required: true
+            },
 
-                type: {
-                    type: String,
-                    required: true,
-                    enum:['dozen','piece'],
-                }
+            type: {
+                type: String,
+                required: true,
+                enum:['dozen','piece'],
+            }
         }
     ]
 

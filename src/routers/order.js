@@ -19,7 +19,9 @@ router.get('/orders', auth.managerAuth,  async (req,res)=>{
         // Calculate the skip value
         const skip = (page - 1) * limit;
 
-        const o = await Order.find({},null,{limit:limit, skip:skip, sort:{updatedAt:-1, createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({},null,{limit:limit, skip:skip, sort:{updatedAt:-1, createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
         //Calculate the pagination and return it in a Map.
@@ -43,7 +45,8 @@ router.get('/orders/id', auth.managerAuth, async (req,res)=>{
     {
         const id= req.body.id;
 
-        const order = await Order.findOne({orderId: id}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const order = await Order.findOne({orderId: id}).populate('workerId').populate('priceSetterId').populate('inspectorId')
+            .populate('collectorId').populate('scannerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
         if(!order)
@@ -80,7 +83,9 @@ router.post('/orders/search',auth.managerAuth, async(req,res)=>{
         if (details.inspectorId) filter['inspectorId'] = details.inspectorId;
         if(details.status) filter['status']=details.status;
 
-        const o = await Order.find(filter, null, {sort:{updatedAt:-1, createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const o = await Order.find(filter, null, {sort:{updatedAt:-1, createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -104,7 +109,9 @@ router.get('/orders/workerRole/waiting_me', auth.userAuth,async (req,res)=>{
 
         const filterId = components.filterByRole({role:req.user.role});
 
-        const o = await Order.find({[filterId]: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({[filterId]: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -121,7 +128,7 @@ router.get('/orders/workerRole/waiting_me', auth.userAuth,async (req,res)=>{
 });
 
 
-//Get a priceSetters orders waiting to be prepared; no Id because they assign it to themselves by patchOrder...
+//Get a priceSetters orders waiting to be priceSetted; no Id because they assign it to themselves by patchOrder...
 router.get('/orders/priceSetter/waiting_me', auth.userAuth,async (req,res)=>{
 
     try
@@ -129,9 +136,13 @@ router.get('/orders/priceSetter/waiting_me', auth.userAuth,async (req,res)=>{
 
         const filterId = components.filterByRole({role:req.user.role});
 
-        const o = await Order.find({ status: {$in:['prepared'], }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({ status: {$in:['prepared'], }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
-        const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_priced'], }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_priced'], }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
 
         // Merge the two arrays of orders, one wi
@@ -152,7 +163,77 @@ router.get('/orders/priceSetter/waiting_me', auth.userAuth,async (req,res)=>{
 });
 
 
-//Get a priceSetters orders waiting to be prepared; no Id because they assign it to themselves by patchOrder...
+//Get a collector orders waiting to be collected; no Id because they assign it to themselves by patchOrder...
+router.get('/orders/collector/waiting_me', auth.userAuth,async (req,res)=>{
+
+    try
+    {
+
+        const filterId = components.filterByRole({role:req.user.role});
+
+        const o = await Order.find({ status: {$in:['priced'], }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_collected'], }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+
+        // Merge the two arrays of orders, one wi
+        const combinedOrders = [...o, ...o2];
+
+        if(!combinedOrders)
+        {
+            return res.status(200).send({});
+        }
+
+        return res.status(200).send(components.prepareOrder({o:combinedOrders}));
+    }
+
+    catch (e)
+    {
+        res.status(500).send({error:"Couldn't get your waiting orders.", message:e.message});
+    }
+});
+
+
+//Get a scanner orders waiting to be collected; no Id because they assign it to themselves by patchOrder...
+router.get('/orders/scanner/waiting_me', auth.userAuth,async (req,res)=>{
+
+    try
+    {
+
+        const filterId = components.filterByRole({role:req.user.role});
+
+        const o = await Order.find({ status: {$in:['collected'], }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_scanned'], }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+
+        // Merge the two arrays of orders, one wi
+        const combinedOrders = [...o, ...o2];
+
+        if(!combinedOrders)
+        {
+            return res.status(200).send({});
+        }
+
+        return res.status(200).send(components.prepareOrder({o:combinedOrders}));
+    }
+
+    catch (e)
+    {
+        res.status(500).send({error:"Couldn't get your waiting orders.", message:e.message});
+    }
+});
+
+
+//Get an inspector orders waiting to be verified; no Id because they assign it to themselves by patchOrder...
 router.get('/orders/inspector/waiting_me', auth.userAuth,async (req,res)=>{
 
     try
@@ -160,9 +241,13 @@ router.get('/orders/inspector/waiting_me', auth.userAuth,async (req,res)=>{
 
         const filterId = components.filterByRole({role:req.user.role});
 
-        const o = await Order.find({ status: {$in:['priced'], }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({ status: {$in:['scanned'], }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
-        const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_verified'], }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_verified'], }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
 
         // Merge the two arrays of orders, one wi
@@ -181,7 +266,6 @@ router.get('/orders/inspector/waiting_me', auth.userAuth,async (req,res)=>{
         res.status(500).send({error:"Couldn't get your waiting orders.", message:e.message});
     }
 });
-
 
 //Gets for: WORKER: [being-prepared, prepared] / PRICE-SETTER: [priced, being_priced] / INSPECTOR: [verified, being_verified]
 router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
@@ -192,7 +276,9 @@ router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
 
         const filterId = components.filterByRole({role:req.user.role});
 
-        const o = await Order.find({[filterId]: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({[filterId]: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} )
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -223,7 +309,9 @@ router.get('/orders/me',auth.userAuth, async(req,res)=>{
 
         const filterId = components.filterByRole({role:req.user.role});
 
-        const o= await Order.find({[filterId]: req.user._id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
+        const o= await Order.find({[filterId]: req.user._id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
 
         if(!o)
         {
@@ -245,7 +333,9 @@ router.get('/orders/me',auth.userAuth, async(req,res)=>{
 router.get('/orders/nonReady', auth.managerAuth, async(req,res)=>{
     try
     {
-        const o = await Order.find({'status':{$nin:['stored','failed','shipped'], }},null,{ sort:{updatedAt: -1, createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({'status':{$nin:['stored','failed','shipped'], }},null,{ sort:{updatedAt: -1, createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
         return res.status(200).send(components.prepareOrder({o:o}));
 
@@ -267,7 +357,8 @@ router.post('/orders/create',auth.managerAuth,async (req,res)=>{
 
         await order.save();
 
-        await (await (await (await order.populate('workerId')).populate('priceSetterId')).populate('inspectorId')).populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'}); //Population
+        await (await (await (await (await (await order.populate('workerId')).populate('priceSetterId')).populate('inspectorId')).populate('collectorId')).populate('scannerId'))
+            .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'}); //Population
 
         const populatedOrder= components.prepareSingleOrder({order:order});
 
@@ -328,7 +419,8 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
             { _id: id },
             { $set: req.body },
             { new: true } // Return the updated document
-        ).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({ path: 'itemsDetails', model: 'Item', select: 'itemId name color' });
+        ).populate('workerId').populate('priceSetterId').populate('collectorId').populate('scannerId')
+            .populate('inspectorId').populate({ path: 'itemsDetails', model: 'Item', select: 'itemId name color' });
 
         if (!updatedOrder) {
             return res.status(404).send({ error: 'No order with such id was found' });
@@ -368,7 +460,9 @@ router.get('/orders/worker/:id',auth.managerAuth,async (req,res)=>{
         // Calculate the skip value
         const skip = (page - 1) * limit;
 
-        const o = await Order.find({workerId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({workerId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -407,7 +501,9 @@ router.get('/orders/priceSetter/:id',auth.managerAuth,async (req,res)=>{
         // Calculate the skip value
         const skip = (page - 1) * limit;
 
-        const o = await Order.find({priceSetterId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({priceSetterId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -446,7 +542,9 @@ router.get('/orders/inspector/:id',auth.managerAuth,async (req,res)=>{
         // Calculate the skip value
         const skip = (page - 1) * limit;
 
-        const o = await Order.find({inspectorId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}}).populate('workerId').populate('priceSetterId').populate('inspectorId').populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+        const o = await Order.find({inspectorId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
         {
@@ -465,5 +563,86 @@ router.get('/orders/inspector/:id',auth.managerAuth,async (req,res)=>{
         res.status(400).send({error:"Couldn't get the orders of this inspector", message:e.message});
     }
 });
+
+
+/** Collector Orders**/
+
+//Get Orders of a specific Collector
+router.get('/orders/collector/:id',auth.managerAuth, async(req,res)=>{
+
+    /** Paginated **/
+
+    try
+    {
+        const id = req.params.id;
+
+        const page = parseInt(req.query.page) || constants.pageDefault; // Current page number, default to 1
+        const limit = parseInt(req.query.limit) || constants.limitDefault; // Number of posts per page, default to 3
+
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
+        const o = await Order.find({collectorId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        if(!o)
+        {
+            return res.status(404).send({error:'No Orders have been found'});
+        }
+
+        //Calculate the pagination and return it in a Map.
+        const pagination= await Order.paginationCalculator({page:page, limit:limit, filter:{collectorId:id} });
+
+        return res.status(200).send(components.prepareOrder({o:o, pagination: pagination}));
+    }
+
+    catch (e)
+    {
+        console.log(`Couldn't get orders of this collector, ${e.message}`);
+        res.status(400).send({error:"Couldn't get the orders of this collector", message:e.message});
+    }
+});
+
+/** Scanner Orders**/
+
+//Get Orders of a specific Scanner
+router.get('/orders/scanner/:id', auth.managerAuth, async(req,res)=>{
+
+    /** Paginated **/
+
+    try
+    {
+        const id = req.params.id;
+
+        const page = parseInt(req.query.page) || constants.pageDefault; // Current page number, default to 1
+        const limit = parseInt(req.query.limit) || constants.limitDefault; // Number of posts per page, default to 3
+
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
+        const o = await Order.find({scannerId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
+
+        if(!o)
+        {
+            return res.status(404).send({error:'No Orders have been found'});
+        }
+
+        //Calculate the pagination and return it in a Map.
+        const pagination= await Order.paginationCalculator({page:page, limit:limit, filter:{scannerId:id} });
+
+        return res.status(200).send(components.prepareOrder({o:o, pagination: pagination}));
+    }
+
+    catch (e)
+    {
+        console.log(`Couldn't get orders of this scanner, ${e.message}`);
+        res.status(400).send({error:"Couldn't get the orders of this scanner", message:e.message});
+    }
+});
+
+//Todo: use Scanner & Collector Orders in Flutter
 
 export default router;

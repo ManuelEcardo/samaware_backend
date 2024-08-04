@@ -22,4 +22,8 @@ const allowedOrderUpdates=['id', 'workerId', 'clientId', 'status', 'registration
 const pageDefault=1;
 const limitDefault=3;
 
-export default {SignKey, clients, wsManager, pageDefault, limitDefault, localUrl, atlasUrl}
+
+/**Preparation Team, not in database because I don't want to create table specifically for them now **/
+const preparationTeam=['صالح مشمش', 'شادي صارم', 'مهند عبد الكريم', 'علاء وهبة', 'محمد حمزة', 'علي فاعور', 'حسن زين', 'عمار سركل', 'بسام الصيادي', 'حسام الكردي', 'عبد القادر الحوت', 'مثقال عبد الخالق', 'امير شاهين', 'حسان الفرخ'];
+
+export default {SignKey, clients, wsManager, pageDefault, limitDefault, localUrl, atlasUrl, preparationTeam}
