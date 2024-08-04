@@ -22,7 +22,8 @@ router.post("/items/add", auth.managerAuth, async (req,res)=>{
     }
 });
 
-router.post('/items/addItem',async (req,res)=>{
+// Add Multiple Items
+router.post('/items/addMultiple',async (req,res)=>{
 
     try
     {
@@ -37,18 +38,18 @@ router.post('/items/addItem',async (req,res)=>{
 
         if(!result)
         {
-            console.log('no data');
-            return res.status(400).send({message:'no data'});
+            console.log('No Result from inserting multiple items');
+            return res.status(400).send({message:'No Result from inserting multiple items'});
         }
 
-        console.log('inserted successfully');
+        console.log('inserted Items Successfully');
 
         res.status(201).send({ message: 'Items inserted successfully' });
     }
     catch (e)
     {
-        console.log(`ERROR WHILE RECEIVING ADD ITEM, ${e.message} ${e.stackTrace}`);
-        res.status(500).send({'error':e, message:e.message});
+        console.log(`ERROR WHILE ADDING MULTIPLE ITEMS, ${e.message} ${e.stackTrace}`);
+        res.status(500).send({error:e, message:e.message});
     }
 });
 

@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import {User} from "../models/user.js"
 import constants from "../shared/constants.js";
 
-
+/** Authenticate a User **/
 const userAuth= async(req, res, next)=>{
     try{
         const token= req.header('Authorization').replace('Bearer ','');
@@ -25,7 +25,7 @@ const userAuth= async(req, res, next)=>{
     }
 };
 
-
+/** Authenticate a Manager **/
 const managerAuth= async(req, res, next)=>{
     try{
         const token= req.header('Authorization').replace('Bearer ','');
@@ -47,5 +47,6 @@ const managerAuth= async(req, res, next)=>{
         res.status(401).send({error:'Not Authenticated', e});
     }
 };
+
 
 export default{userAuth, managerAuth};

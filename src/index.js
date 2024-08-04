@@ -4,7 +4,11 @@ import cors from 'cors';
 
 import userRouter from './routers/user.js';
 import orderRouter from './routers/order.js';
+
 import itemRouter from './routers/item.js';
+import clientRouter from './routers/clients.js';
+import salesmanRouter from './routers/salesman.js';
+
 import expressWs from 'express-ws';
 import constants from "./shared/constants.js";
 import components from "./shared/components.js";
@@ -31,7 +35,10 @@ app.use(express.json({limit:'50mb'}));
 
 app.use(userRouter);
 app.use(orderRouter);
+
 app.use(itemRouter);
+app.use(clientRouter);
+app.use(salesmanRouter);
 
 //TBD FOR ITEMS INSERTION
 //app.use(express.urlencoded({ limit: '50mb', extended: true }));
