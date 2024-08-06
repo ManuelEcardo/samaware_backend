@@ -10,7 +10,8 @@ const salesmanSchema = new mongoose.Schema({
     salesmanId:{
         type:String,
         required:true,
-        trim:true
+        trim:true,
+        unique:true,
     },
 
 }, { timestamps: true });
@@ -22,4 +23,5 @@ salesmanSchema.virtual('salesmanClients',{
     localField:'salesmanId',
     foreignField:'salesmanId',
 });
+
 export const Salesman = mongoose.model('Salesman', salesmanSchema);

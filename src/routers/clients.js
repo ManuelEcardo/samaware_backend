@@ -1,6 +1,9 @@
 import express from "express";
 import {Client} from "../models/client.js";
 import auth from "../middleware/auth.js";
+import constants from "../shared/constants.js";
+import {Order} from "../models/order.js";
+import components from "../shared/components.js";
 
 
 const router= express.Router();
@@ -64,15 +67,16 @@ router.get('/clients/clientId', auth.managerAuth, async(req,res)=>{
     {
         const id = req.body.id;
 
-        const client = await Client.findOne({clientId: id});
+        const client = await Client.findOne({clientId: id}).populate('salesmanClients').populate('clientOrders');
 
         if(!client)
         {
             return res.status(404).send({error:'no client with such ID was found'});
         }
 
-        return res.status(200).send(client);
+        return res.status(200).send(components.prepareSingleClient(client));
     }
+
     catch (e)
     {
         res.status(500).send({error:'Error while getting a client by id...', message:e.message});
@@ -82,11 +86,23 @@ router.get('/clients/clientId', auth.managerAuth, async(req,res)=>{
 //Get All Clients
 router.get('/clients/all', auth.managerAuth, async(req,res)=>{
 
+    /** Paginated **/
+
     try
     {
-        const c = await Client.find();
+        const page = parseInt(req.query.page) || constants.pageDefault; // Current page number, default to 1
+        const limit = parseInt(req.query.limit) || constants.clientLimitDefault; // Number of posts per page, default to 15
 
-        res.status(200).send(c);
+        // Calculate the skip value
+        const skip = (page - 1) * limit;
+
+        const c = await Client.find({},null,{limit:limit, skip:skip, sort:{updatedAt:-1, createdAt:-1}}).populate('salesmanClients');
+
+
+        //Calculate the pagination and return it in a Map.
+        const pagination= await Client.paginationCalculator({page:page, limit:limit});
+
+        return res.status(200).send(components.prepareClients({c:c, pagination:pagination}));
     }
 
     catch (e)

@@ -421,7 +421,7 @@ const orderSchema = new mongoose.Schema({
     },
 
     clientId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: 'Client',
         required: false,
         cast: true,
@@ -488,6 +488,12 @@ orderSchema.virtual('itemsDetails', {
     localField: 'items.itemId',
     foreignField: 'itemId',
     justOne: false
+});
+
+orderSchema.virtual('clientDetails',{
+    ref:'Client',
+    localField:'clientId',
+    foreignField:'clientId'
 });
 
 //Calculate the Pagination and return the data

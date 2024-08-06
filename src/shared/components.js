@@ -7,23 +7,44 @@ import jwt from "jsonwebtoken";
 
 function prepareOrders({o, pagination})
 {
+    // const processedOrders = o.map(order => {
+    //     const itemsWithDetails = order.items.map(item => {
+    //         const details = order.itemsDetails.find(detail => detail.itemId === item.itemId);
+    //         return {
+    //             itemId: item.itemId,
+    //             name: details ? details.name : '',
+    //             quantity: item.quantity,
+    //             type: item.type
+    //         };
+    //     });
+    //
+    //     // Create a shallow copy of the order object to avoid mutating the original one
+    //     const orderCopy = { ...order._doc };
+    //
+    //     // Check if clientDetails exists and assign the first element if it's an array
+    //     if (order.clientDetails && Array.isArray(order.clientDetails))
+    //     {
+    //         orderCopy.clientId = order.clientDetails[0]; // Use the first element
+    //     }
+    //
+    //     else
+    //     {
+    //         orderCopy.clientId = order.clientDetails; // Assign directly if it's not an array
+    //     }
+    //
+    //     // Remove items from the orderCopy
+    //     delete orderCopy.items;
+    //     delete orderCopy.clientDetails;
+    //
+    //     return {
+    //         order: orderCopy,
+    //         items: itemsWithDetails
+    //     };
+    // });
+
     const processedOrders = o.map(order => {
-        const itemsWithDetails = order.items.map(item => {
-            const details = order.itemsDetails.find(detail => detail.itemId === item.itemId);
-            return {
-                itemId: item.itemId,
-                name: details ? details.name : '',
-                quantity: item.quantity,
-                type: item.type
-            };
-        });
-
-        order.items = null; // Don't want the items to be returned
-
-        return {
-            order: order,
-            items: itemsWithDetails
-        };
+        // Use prepareSingleOrder to process each order
+        return prepareSingleOrder({order});
     });
 
     return {
@@ -49,18 +70,20 @@ function prepareSingleOrder({order})
 
     order.items=null; //Don't want the items to be returned
 
+
+    // Convert clientDetails to an object if it's an array with one element
+    let clientDetails = Array.isArray(order.clientDetails) ? order.clientDetails[0] : order.clientDetails;
+
+    // Ensure clientDetails.salesmanClients is populated
+    if (clientDetails && clientDetails.salesmanClients) {
+        clientDetails.salesmanId = clientDetails.salesmanClients[0]; // Assign the first salesman client directly to salesmanId
+        delete clientDetails.salesmanClients; // Remove the salesmanClients field
+    }
+
     return {
-        // _id:order._id,
-        // orderId: order.orderId,
-        // registration_date: order.registration_date,
-        // shipping_date: order.shipping_date,
-        // preparation_starting_date: order.preparation_starting_date,
-        // preparation_end_date: order.preparation_end_date,
-        // status: order.status,
-        // workerId: order.workerId,
-        // clientId: order.clientId,
-        order:order,
+        order: order,
         items: itemsWithDetails,
+        clientId: clientDetails,
     };
 }
 
@@ -167,7 +190,6 @@ function prepareSingleCollector({collector})
 
 }
 
-
 //SCANNER PREPARE
 
 /** prepare a scanner details **/
@@ -180,6 +202,37 @@ function prepareSingleScanner({scanner})
         orders: preparedOrders
     };
 
+}
+
+// CLIENTS PREPARE
+/** prepare clients details **/
+function prepareClients({ c, pagination }) {
+    const processedClients = c.map(client => prepareSingleClient(client));
+
+    return {
+        clients: processedClients,
+        ...(pagination && { pagination })
+    };
+}
+
+/** prepare a single client details; with Salesman & orders if populated **/
+function prepareSingleClient(client){
+    const preparedClient = { ...client.toObject() };
+
+    const preparedOrders =  client.clientOrders? prepareOrders({o:client.clientOrders}) : null ;
+
+    // Check if salesmanClients exists and assign the first element if it's an array
+    if (client.salesmanClients && Array.isArray(client.salesmanClients)) {
+        preparedClient.salesmanId = client.salesmanClients[0]; // Use the first element
+    } else {
+        preparedClient.salesmanId = client.salesmanClients; // Assign directly if it's not an array
+    }
+
+    if (client.clientOrders) {
+        preparedClient.orders = preparedOrders;
+    }
+
+    return preparedClient;
 }
 
 //WEB SOCKETS
@@ -207,7 +260,6 @@ async function wsAuth (message)
         return null;
     }
 }
-
 
 /** Notify manager via ws **/
 function wsNotifyManager({order})
@@ -335,5 +387,5 @@ function filterByRole({role})
 export default { prepareOrder: prepareOrders, prepareSingleOrder, prepareWorkers, wsAuth, preparePriceSetters,
                  wsNotifyManager, wsFindClient, wsNotifyInclinedClients, findTypesByRole, prepareInspectors,
                  filterByRole, prepareSingleWorker, prepareSinglePriceSetter, prepareSingleInspector,
-                 prepareSingleCollector, prepareSingleScanner
+                 prepareSingleCollector, prepareSingleScanner, prepareClients, prepareSingleClient
                 }

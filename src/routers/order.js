@@ -20,7 +20,8 @@ router.get('/orders', auth.managerAuth,  async (req,res)=>{
         const skip = (page - 1) * limit;
 
         const o = await Order.find({},null,{limit:limit, skip:skip, sort:{updatedAt:-1, createdAt:-1}})
-            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('clientDetails').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
@@ -46,7 +47,9 @@ router.get('/orders/id', auth.managerAuth, async (req,res)=>{
         const id= req.body.id;
 
         const order = await Order.findOne({orderId: id}).populate('workerId').populate('priceSetterId').populate('inspectorId')
-            .populate('collectorId').populate('scannerId').populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
+            .populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
+            .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
 
         if(!order)
@@ -85,6 +88,7 @@ router.post('/orders/search',auth.managerAuth, async(req,res)=>{
 
         const o = await Order.find(filter, null, {sort:{updatedAt:-1, createdAt:-1}})
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
         if(!o)
@@ -111,6 +115,7 @@ router.get('/orders/workerRole/waiting_me', auth.userAuth,async (req,res)=>{
 
         const o = await Order.find({[filterId]: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
@@ -138,10 +143,12 @@ router.get('/orders/priceSetter/waiting_me', auth.userAuth,async (req,res)=>{
 
         const o = await Order.find({ status: {$in:['prepared'], }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_priced'], }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
 
@@ -173,10 +180,12 @@ router.get('/orders/collector/waiting_me', auth.userAuth,async (req,res)=>{
 
         const o = await Order.find({ status: {$in:['priced'], }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_collected'], }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
 
@@ -208,10 +217,12 @@ router.get('/orders/scanner/waiting_me', auth.userAuth,async (req,res)=>{
 
         const o = await Order.find({ status: {$in:['collected'], }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_scanned'], }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
 
@@ -243,10 +254,12 @@ router.get('/orders/inspector/waiting_me', auth.userAuth,async (req,res)=>{
 
         const o = await Order.find({ status: {$in:['scanned'], }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         const o2 = await Order.find({[filterId]: req.user._id, status: {$in:['being_verified'], }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
 
@@ -278,6 +291,7 @@ router.get('/orders/doneMe', auth.userAuth, async (req,res)=>{
 
         const o = await Order.find({[filterId]: req.user._id, status: {$in:orderTypes, }}, null, { sort:{createdAt:-1}} )
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
@@ -311,6 +325,7 @@ router.get('/orders/me',auth.userAuth, async(req,res)=>{
 
         const o= await Order.find({[filterId]: req.user._id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'} );
 
         if(!o)
@@ -335,6 +350,7 @@ router.get('/orders/nonReady', auth.managerAuth, async(req,res)=>{
     {
         const o = await Order.find({'status':{$nin:['stored','failed','shipped'], }},null,{ sort:{updatedAt: -1, createdAt:-1}})
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'});
 
         return res.status(200).send(components.prepareOrder({o:o}));
@@ -350,15 +366,25 @@ router.get('/orders/nonReady', auth.managerAuth, async(req,res)=>{
 
 //Create an Order
 router.post('/orders/create',auth.managerAuth,async (req,res)=>{
-
     try
     {
         const order = new Order(req.body);
 
         await order.save();
 
-        await (await (await (await (await (await order.populate('workerId')).populate('priceSetterId')).populate('inspectorId')).populate('collectorId')).populate('scannerId'))
-            .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'}); //Population
+        // await (await (await (await (await (await (await order.populate('workerId')).populate('priceSetterId')).populate('inspectorId')).populate('collectorId')).populate('scannerId'))
+        //     .populate({path: 'clientDetails',populate: { path: 'salesmanClients' } , options:{lean:true}}))
+        //     .populate({path: 'itemsDetails', model: 'Item', select: 'itemId name color'}); //Population
+
+        await Promise.all([
+            order.populate('workerId'),
+            order.populate('priceSetterId'),
+            order.populate('inspectorId'),
+            order.populate('collectorId'),
+            order.populate('scannerId'),
+            order.populate({ path: 'clientDetails', populate: { path: 'salesmanClients' } }),
+            order.populate({ path: 'itemsDetails', model: 'Item', select: 'itemId name color' })
+        ]);
 
         const populatedOrder= components.prepareSingleOrder({order:order});
 
@@ -420,6 +446,7 @@ router.patch('/orders/patch', auth.userAuth, async (req,res)=>{
             { $set: req.body },
             { new: true } // Return the updated document
         ).populate('workerId').populate('priceSetterId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate('inspectorId').populate({ path: 'itemsDetails', model: 'Item', select: 'itemId name color' });
 
         if (!updatedOrder) {
@@ -462,6 +489,7 @@ router.get('/orders/worker/:id',auth.managerAuth,async (req,res)=>{
 
         const o = await Order.find({workerId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
@@ -503,6 +531,7 @@ router.get('/orders/priceSetter/:id',auth.managerAuth,async (req,res)=>{
 
         const o = await Order.find({priceSetterId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
@@ -544,6 +573,7 @@ router.get('/orders/inspector/:id',auth.managerAuth,async (req,res)=>{
 
         const o = await Order.find({inspectorId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
@@ -584,6 +614,7 @@ router.get('/orders/collector/:id',auth.managerAuth, async(req,res)=>{
 
         const o = await Order.find({collectorId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
@@ -623,6 +654,7 @@ router.get('/orders/scanner/:id', auth.managerAuth, async(req,res)=>{
 
         const o = await Order.find({scannerId:id}, null, {limit:limit, skip:skip, sort:{createdAt:-1}})
             .populate('workerId').populate('priceSetterId').populate('inspectorId').populate('collectorId').populate('scannerId')
+            .populate({path: 'clientDetails',populate: { path: 'salesmanClients' }, options:{lean:true} })
             .populate({path: 'itemsDetails',model: 'Item', select: 'itemId name color'});
 
         if(!o)
