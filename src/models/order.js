@@ -12,6 +12,13 @@ const orderSchema = new mongoose.Schema({
         required:true
     },
 
+    //Fatoura ID gets added from inspector as it gets created in edari then
+    fatouraId:{
+        type:String,
+        required:false,
+        trim:true
+    },
+
     registration_date: {
         type:String,
         cast:false,
@@ -50,6 +57,12 @@ const orderSchema = new mongoose.Schema({
             }
             return value;
         }
+    },
+
+    destination:{
+        type:String,
+        required:false,
+        enum:['مفرق - مدينة وريف','مراكز الشركة - محلات','جملة - حريقة','محافظات'],
     },
 
     // Dates for each step
